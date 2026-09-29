@@ -5,6 +5,7 @@
 #include "ObserverPawn.h"
 #include "ScanProjection.h"
 #include "NavFixedWing.h" // 순수 C++ 고정익 항법 엔진
+#include "DroneMathUtil.h"
 
 #include "ImageUtils.h"
 #include "Misc/FileHelper.h"
@@ -15,34 +16,6 @@
 #include "Engine/TextureRenderTarget2D.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
-
-// -----------------------------------------------------------------------------
-// [수학 헬퍼]: 3D 월드 좌표를 카메라 뷰포트 정규화 좌표(0.0 ~ 1.0)로 정확히 투영
-// -----------------------------------------------------------------------------
-static bool ProjectWorldPointToScreenExact(
-    const FVector& WorldPoint,
-    const FVector& CamLoc,
-    const FRotator& CamRot,
-    float CamFOV,
-    float RenderWidth,
-    float RenderHeight,
-    FVector2D& OutNormalizedPos)
-{
-    FTransform CamTransform(CamRot, CamLoc);
-    FVector LocalPoint = CamTransform.InverseTransformPosition(WorldPoint);
-    if (LocalPoint.X <= 1.0f) return false; // 카메라 뒤쪽은 제외
-
-    float AspectRatio = RenderWidth / RenderHeight;
-    float HalfHFOVRads = FMath::DegreesToRadians(CamFOV * 0.5f);
-    float TanHalfHFOV = FMath::Tan(HalfHFOVRads);
-    float TanHalfVFOV = TanHalfHFOV / AspectRatio;
-
-    float ScreenX = (LocalPoint.Y / (LocalPoint.X * TanHalfHFOV)) * 0.5f + 0.5f;
-    float ScreenY = 0.5f - (LocalPoint.Z / (LocalPoint.X * TanHalfVFOV)) * 0.5f;
-
-    OutNormalizedPos = FVector2D(ScreenX, ScreenY);
-    return true;
-}
 
 // -----------------------------------------------------------------------------
 // [생성자 및 컴포넌트 셋업]
@@ -255,7 +228,7 @@ void ADronePawn::ExecuteCapture()
             {
                 FVector WorldCorner = TargetTransform.TransformPosition(LocalCorners[c]);
                 FVector2D NormPos;
-                if (ProjectWorldPointToScreenExact(WorldCorner, CamLoc, CamRot, CamFOV,
+                if (DroneMathUtil::ProjectWorldPointToScreenExact(WorldCorner, CamLoc, CamRot, CamFOV,
                     static_cast<float>(RenderWidth), static_cast<float>(RenderHeight), NormPos))
                 {
                     MinX = FMath::Min(MinX, NormPos.X);

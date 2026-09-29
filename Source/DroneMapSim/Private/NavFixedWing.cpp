@@ -1,8 +1,8 @@
-#include "NavFixedWing.h"
+ï»¿#include "NavFixedWing.h"
 
 FNavFixedWing::FNavFixedWing()
 {
-    CurrentSpeed = 1500.0f; // 15 m/s·Î ½ÃÀÛ
+    CurrentSpeed = 1500.0f; // 15 m/s
     InputThrottle = 0.0f;
     InputRoll = 0.0f;
     InputPitch = 0.0f;
@@ -11,6 +11,7 @@ FNavFixedWing::FNavFixedWing()
 
 void FNavFixedWing::SetManualInput(float Throttle, float Roll, float Pitch, float Yaw)
 {
+    // ì¡°ì¢… ì…ë ¥ì´ ë“¤ì–´ì˜¤ë©´ íƒ€ê²Ÿ ì¡°íƒ€ê°’ ê°±ì‹ 
     InputThrottle = Throttle;
     InputRoll = Roll;
     InputPitch = Pitch;
@@ -20,27 +21,57 @@ void FNavFixedWing::SetManualInput(float Throttle, float Roll, float Pitch, floa
 void FNavFixedWing::Step(const FVector& CurrentLoc, const FRotator& CurrentRot, float DeltaTime,
     FVector& OutNextLoc, FRotator& OutNextRot)
 {
-    // 1. ½º·ÎÆ² ÀÔ·ÂÀ¸·Î ºñÇà ¼Óµµ °¡°¨¼Ó (Å°¸¦ ¶¼¾îµµ MinSpeed ¾Æ·¡·Î´Â ¶³¾îÁöÁö ¾ÊÀ½)
-    CurrentSpeed = FMath::Clamp(CurrentSpeed + (InputThrottle * 800.0f * DeltaTime), MinSpeed, MaxSpeed);
+    // -------------------------------------------------------------
+    // 1. [ì‹¤ì œ í•­ê³µê¸° ì¡°íƒ€ë©´ ë¬¼ë¦¬]: ì¡°ì¢… ì…ë ¥ê°’ ìì²´ë¥¼ ë¶€ë“œëŸ½ê²Œ ìŠ¤ë¬´ë”©
+    //    (GCS í†µì‹ ì´ ë„ì—„ë„ì—„ ì˜¤ë”ë¼ë„ ë“œë¡  ìŠ¤ìŠ¤ë¡œ ë¶€ë“œëŸ¬ìš´ ê³¡ì„ ì„ ê·¸ë¦¼)
+    // -------------------------------------------------------------
+    static float FilteredRoll = 0.0f;
+    static float FilteredPitch = 0.0f;
+    static float FilteredYaw = 0.0f;
 
-    // 2. Á¶Çâ °¢µµ °è»ê (ºñÇà±â½Ä ¹ğÅ© ÅÏ ¿¬µ¿)
+    // ì¡°íƒ€ë©´ì´ ê¸°ê³„ì ìœ¼ë¡œ ì²œì²œíˆ ì›€ì§ì´ëŠ” ë°˜ì‘ ì†ë„ (ê³µë ¥ ë°˜ì‘)
+    FilteredRoll = FMath::FInterpTo(FilteredRoll, InputRoll, DeltaTime, 3.0f);
+    FilteredPitch = FMath::FInterpTo(FilteredPitch, InputPitch, DeltaTime, 3.0f);
+    FilteredYaw = FMath::FInterpTo(FilteredYaw, InputYaw, DeltaTime, 3.0f);
+
+    // -------------------------------------------------------------
+    // 2. ìŠ¤ë¡œí‹€ ë° ì†ë„ ê°€ê°ì† (ê´€ì„± ë°˜ì˜)
+    // -------------------------------------------------------------
+    CurrentSpeed = FMath::Clamp(CurrentSpeed + (InputThrottle * 600.0f * DeltaTime), MinSpeed, MaxSpeed);
+
+    // -------------------------------------------------------------
+    // 3. ê¸°ì²´ íšŒì „ê° ê³„ì‚° (ì‹¤ì œ ê³ ì •ìµ ë±…í¬-í„´ ë¹„í–‰ ì—­í•™)
+    // -------------------------------------------------------------
     FRotator TargetRot = CurrentRot;
 
-    // Pitch: ¿¤¸®º£ÀÌÅÍ (±â¼ö ¿Ã¸²/³»¸², ÃÖ´ë ¡¾35µµ)
-    TargetRot.Pitch = FMath::Clamp(TargetRot.Pitch + (InputPitch * 45.0f * DeltaTime), -35.0f, 35.0f);
+    // [Roll]: í•„í„°ë§ëœ ì¡°íƒ€ê°’ì— ë”°ë¼ ìµœëŒ€ 40ë„ê¹Œì§€ ë‚ ê°œë¥¼ ë¶€ë“œëŸ½ê²Œ ê¸°ìš¸ì„
+    float TargetBankRoll = FilteredRoll * 40.0f;
+    TargetRot.Roll = FMath::FInterpTo(CurrentRot.Roll, TargetBankRoll, DeltaTime, 2.5f);
 
-    // Roll: ³¯°³ ±â¿ï±â (ÃÖ´ë 40µµ ¹ğÅ©°¢À¸·Î ºÎµå·´°Ô ±â¿ï¾îÁü)
-    float TargetBankRoll = InputRoll * 40.0f;
-    TargetRot.Roll = FMath::FInterpTo(CurrentRot.Roll, TargetBankRoll, DeltaTime, 4.0f);
+    // [Pitch]: ìŠ¹ê°•íƒ€ ë°˜ì‘ (ìµœëŒ€ Â±30ë„)
+    float TargetPitch = FilteredPitch * 30.0f;
+    TargetRot.Pitch = FMath::FInterpTo(CurrentRot.Pitch, TargetPitch, DeltaTime, 3.0f);
 
-    // Yaw: ³¯°³°¡ ±â¿ï¾îÁø ¹ğÅ©°¢¿¡ ºñ·ÊÇÏ¿© ºñÇà±â°¡ ÀÚ¿¬½º·´°Ô ¼±È¸ + ·¯´õ(Yaw) ÀÔ·Â
-    float TurnRateFromRoll = (TargetRot.Roll / 40.0f) * 50.0f;
-    TargetRot.Yaw += (TurnRateFromRoll + InputYaw * 40.0f) * DeltaTime;
+    // [Yaw]: â­ï¸ ë¹„í–‰ ì—­í•™ì˜ í•µì‹¬!
+    // ë‚ ê°œê°€ ê¸°ìš¸ì–´ì§„ ê°ë„(Roll)ì— ë”°ë¼ ê³µê¸°ì—­í•™ì ìœ¼ë¡œ ì›ì„ ê·¸ë¦¬ë©° ìì—° ì„ íšŒ + ëŸ¬ë”
+    float CoordinatedTurnRate = (TargetRot.Roll / 40.0f) * 45.0f; // ë±…í¬ ë¹„ë¡€ ì„ íšŒ ê°ì†ë„
+    float RudderRate = FilteredYaw * 35.0f;                       // ëŸ¬ë” í¸í–¥ ê°ì†ë„
+    TargetRot.Yaw += (CoordinatedTurnRate + RudderRate) * DeltaTime;
 
-    // ÀÚ¼¼ È¸Àü°ª ºÎµå·´°Ô º¸°£
-    OutNextRot = FMath::RInterpTo(CurrentRot, TargetRot, DeltaTime, 5.0f);
+    // ìµœì¢… ìì„¸ ë³´ê°„
+    OutNextRot = TargetRot;
 
-    // 3. °íÁ¤ÀÍÀº ±â¼ö°¡ ¹Ù¶óº¸´Â Àü¹æ(Forward)À¸·Î ²÷ÀÓ¾øÀÌ ÀüÁø ºñÇà!
+    // -------------------------------------------------------------
+    // 4. ê³ ì •ìµì€ ê¸°ìˆ˜ê°€ ê°€ë¦¬í‚¤ëŠ” ë²¡í„° ë°©í–¥ìœ¼ë¡œ ëŠì„ì—†ì´ ì „ì§„
+    // -------------------------------------------------------------
     FVector ForwardDir = OutNextRot.Vector();
     OutNextLoc = CurrentLoc + (ForwardDir * CurrentSpeed * DeltaTime);
+
+    // -------------------------------------------------------------
+    // 5. â­ï¸ [ìë™ ì¤‘ë¦½ ê°ì‡ ]: GCSì—ì„œ ì¶”ê°€ íŒ¨í‚·ì´ ì•ˆ ì˜¤ë©´ ì¡°íƒ€ë©´ì´ ìŠ¤ìŠ¤ë¡œ ì¤‘ë¦½(0)ìœ¼ë¡œ ë³µê·€!
+    // -------------------------------------------------------------
+    InputRoll = FMath::FInterpTo(InputRoll, 0.0f, DeltaTime, 2.0f);
+    InputPitch = FMath::FInterpTo(InputPitch, 0.0f, DeltaTime, 2.0f);
+    InputYaw = FMath::FInterpTo(InputYaw, 0.0f, DeltaTime, 2.0f);
+    InputThrottle = FMath::FInterpTo(InputThrottle, 0.0f, DeltaTime, 2.0f);
 }
