@@ -1,0 +1,16 @@
+﻿pktImgHdr.ImageType = 0;
+pktImgHdr.FrameId = 0;
+pktImgHdr.Chksum = 0;
+pktImgHdr.Reserved_0 = 0;
+pktImgHdr.Reserved_1 = 0;
+pktImgHdr.Reserved_2 = 0;
+pktImgHdr.Reserved_3 = 0;
+pktImgHdr.Reserved_4 = 0;
+pktImgHdr.Reserved_5 = 0;
+pktImgHdr.Reserved_6 = 0;
+pktImgHdr.Reserved_7 = 0;
+pktImgHdr.Reserved_8 = 0;
+pktImgHdr.Reserved_9 = 0;
+pktImgHdr.Reserved_10 = 0;
+pktImgHdr.Reserved_11 = 0;
+pktImgHdr.Reserved_12 = 0;

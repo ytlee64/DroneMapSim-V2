@@ -1,0 +1,9 @@
+{
+  "TypeName": "Position",
+  "Desc": "언리얼 3D 월드 좌표 (100cm = 1m)",
+  "Fields": [
+    { "Name": "x", "KorName": "X좌표", "Type": "float", "Range": "-200000.0 ~ 200000.0", "Unit": "cm", "Format": "%.1f", "Desc": "동/서 방향" },
+    { "Name": "y", "KorName": "Y좌표", "Type": "float", "Range": "-200000.0 ~ 200000.0", "Unit": "cm", "Format": "%.1f", "Desc": "남/북 방향" },
+    { "Name": "z", "KorName": "고도Z", "Type": "float", "Range": "0.0 ~ 50000.0", "Unit": "cm", "Format": "%.1f", "Desc": "절대 고도 (ASL)" }
+  ]
+}

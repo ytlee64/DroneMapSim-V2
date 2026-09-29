@@ -1,0 +1,86 @@
+[
+  {
+    "No": 0,
+    "Name": "id",
+    "KorName": "명령식별자",
+    "Type": "string",
+    "Range": "-",
+    "LSB": "-",
+    "Default": "FLY_VECTOR",
+    "Unit": "-",
+    "Format": "%s",
+    "Desc": "고정익 연속 비행 벡터 유도 명령 (속도/방위/고도 제어)"
+  },
+  {
+    "No": 1,
+    "Name": "seq",
+    "KorName": "명령순번",
+    "Type": "uint32_t",
+    "Range": "0 ~ 2^32-1",
+    "LSB": 1,
+    "Default": 0,
+    "Unit": "-",
+    "Format": "%d",
+    "Desc": "명령 시퀀스 카운터"
+  },
+  {
+    "No": 2,
+    "Name": "speed",
+    "KorName": "대기속도",
+    "Type": "float",
+    "Range": "1200.0 ~ 3500.0",
+    "LSB": 1,
+    "Default": 1800.0,
+    "Unit": "cm/s",
+    "Format": "%.1f",
+    "Desc": "비행 전진 속도 (실속 12m/s 이상 ~ 35m/s, 기본 18m/s=64.8km/h)"
+  },
+  {
+    "No": 3,
+    "Name": "target_yaw",
+    "KorName": "목표방위각",
+    "Type": "float",
+    "Range": "-180.0 ~ 180.0",
+    "LSB": 1,
+    "Default": 0.0,
+    "Unit": "deg",
+    "Format": "%.1f",
+    "Desc": "목표 진행 방위각 (북쪽 0° 기준 절대 Heading)"
+  },
+  {
+    "No": 4,
+    "Name": "target_alt",
+    "KorName": "목표비행고도",
+    "Type": "float",
+    "Range": "1000.0 ~ 50000.0",
+    "LSB": 1,
+    "Default": 6500.0,
+    "Unit": "cm",
+    "Format": "%.1f",
+    "Desc": "유지할 목표 비행 절대 고도 (ASL)"
+  },
+  {
+    "No": 5,
+    "Name": "climb_rate",
+    "KorName": "상승하강률",
+    "Type": "float",
+    "Range": "-500.0 ~ 500.0",
+    "LSB": 1,
+    "Default": 0.0,
+    "Unit": "cm/s",
+    "Format": "%.1f",
+    "Desc": "고도 변경 시 수직 상승/하강 속도 (+:상승, -:강하, 최대 5m/s)"
+  },
+  {
+    "No": 6,
+    "Name": "turn_rate",
+    "KorName": "선회각속도",
+    "Type": "float",
+    "Range": "-30.0 ~ 30.0",
+    "LSB": 1,
+    "Default": 0.0,
+    "Unit": "deg/s",
+    "Format": "%.1f",
+    "Desc": "초당 선회 각속도 (또는 뱅크각 Bank Angle 한계 제어)"
+  }
+]

@@ -1,0 +1,8 @@
+{
+  "TypeName": "GimbalAngle",
+  "Desc": "카메라 짐벌 2축 지향각",
+  "Fields": [
+    { "Name": "pitch", "KorName": "짐벌피치", "Type": "float", "Range": "-90.0 ~ 20.0", "Default": -90.0, "Unit": "deg", "Format": "%.1f", "Desc": "-90°:수직직하, -60°:사선" },
+    { "Name": "yaw", "KorName": "짐벌팬", "Type": "float", "Range": "-180.0 ~ 180.0", "Default": 0.0, "Unit": "deg", "Format": "%.1f", "Desc": "기체 기준 상대 각도" }
+  ]
+}

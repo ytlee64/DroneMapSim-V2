@@ -1,0 +1,9 @@
+{
+  "TypeName": "Rotation",
+  "Desc": "기체 3축 오일러 각도",
+  "Fields": [
+    { "Name": "pitch", "KorName": "피치", "Type": "float", "Range": "-90.0 ~ 90.0", "Unit": "deg", "Format": "%.2f", "Desc": "기수 상하 각도" },
+    { "Name": "yaw", "KorName": "요(헤딩)", "Type": "float", "Range": "-180.0 ~ 180.0", "Unit": "deg", "Format": "%.2f", "Desc": "진행 방위각 (북 0°)" },
+    { "Name": "roll", "KorName": "롤", "Type": "float", "Range": "-180.0 ~ 180.0", "Unit": "deg", "Format": "%.2f", "Desc": "좌우 기울기" }
+  ]
+}

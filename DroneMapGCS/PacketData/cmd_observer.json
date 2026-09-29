@@ -1,0 +1,38 @@
+[
+  {
+    "No": 0,
+    "Name": "id",
+    "KorName": "명령식별자",
+    "Type": "string",
+    "Range": "-",
+    "LSB": "-",
+    "Default": "OBSERVER",
+    "Unit": "-",
+    "Format": "%s",
+    "Desc": "언리얼 뷰포트 시점 모드 변경 명령 식별자"
+  },
+  {
+    "No": 1,
+    "Name": "seq",
+    "KorName": "명령순번",
+    "Type": "uint32_t",
+    "Range": "0 ~ 2^32-1",
+    "LSB": 1,
+    "Default": 0,
+    "Unit": "-",
+    "Format": "%d",
+    "Desc": "명령 시퀀스 카운터"
+  },
+  {
+    "No": 2,
+    "Name": "observer_mode",
+    "KorName": "목표관찰자모드",
+    "Type": "string",
+    "Range": "CHASE | STATIONARY | TOP_DOWN | FREE_ROAM",
+    "LSB": "-",
+    "Default": "CHASE",
+    "Unit": "-",
+    "Format": "%s",
+    "Desc": "전환할 시점 모드 문자열"
+  }
+]

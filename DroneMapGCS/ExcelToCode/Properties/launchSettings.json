@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "ExcelToHeader": {
+      "commandName": "Project",
+      "workingDirectory": "$(SolutionDir)"
+    }
+  }
+}

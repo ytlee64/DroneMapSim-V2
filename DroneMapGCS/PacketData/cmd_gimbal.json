@@ -1,0 +1,50 @@
+[
+  {
+    "No": 0,
+    "Name": "id",
+    "KorName": "명령식별자",
+    "Type": "string",
+    "Range": "-",
+    "LSB": "-",
+    "Default": "GIMBAL",
+    "Unit": "-",
+    "Format": "%s",
+    "Desc": "카메라 짐벌 각도 제어 명령 식별자"
+  },
+  {
+    "No": 1,
+    "Name": "seq",
+    "KorName": "명령순번",
+    "Type": "uint32_t",
+    "Range": "0 ~ 2^32-1",
+    "LSB": 1,
+    "Default": 0,
+    "Unit": "-",
+    "Format": "%d",
+    "Desc": "명령 시퀀스 카운터"
+  },
+  {
+    "No": 2,
+    "Name": "gimbal_pitch",
+    "KorName": "짐벌목표Pitch",
+    "Type": "float",
+    "Range": "-90.0 ~ 20.0",
+    "LSB": 1,
+    "Default": -90.0,
+    "Unit": "deg",
+    "Format": "%.1f",
+    "Desc": "카메라 틸트 각도 (-90°: 직하 Nadir 정사촬영, -60°: 사선 Oblique)"
+  },
+  {
+    "No": 3,
+    "Name": "gimbal_yaw",
+    "KorName": "짐벌목표Yaw",
+    "Type": "float",
+    "Range": "-180.0 ~ 180.0",
+    "LSB": 1,
+    "Default": 0.0,
+    "Unit": "deg",
+    "Format": "%.1f",
+    "Desc": "카메라 팬 각도 (기체 헤딩 기준 상대 각도)"
+  }
+]

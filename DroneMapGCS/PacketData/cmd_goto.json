@@ -1,0 +1,74 @@
+[
+  {
+    "No": 0,
+    "Name": "id",
+    "KorName": "명령식별자",
+    "Type": "string",
+    "Range": "-",
+    "LSB": "-",
+    "Default": "GOTO",
+    "Unit": "-",
+    "Format": "%s",
+    "Desc": "목표 좌표 비행 명령 식별자"
+  },
+  {
+    "No": 1,
+    "Name": "seq",
+    "KorName": "명령순번",
+    "Type": "uint32_t",
+    "Range": "0 ~ 2^32-1",
+    "LSB": 1,
+    "Default": 0,
+    "Unit": "-",
+    "Format": "%d",
+    "Desc": "명령 시퀀스 카운터 (중복/누락 방지)"
+  },
+  {
+    "No": 2,
+    "Name": "loc_x",
+    "KorName": "목표X좌표",
+    "Type": "float",
+    "Range": "-200000.0 ~ 200000.0",
+    "LSB": 1,
+    "Default": 0.0,
+    "Unit": "cm",
+    "Format": "%.1f",
+    "Desc": "언리얼 월드 목표 X 좌표 (100cm=1m)"
+  },
+  {
+    "No": 3,
+    "Name": "loc_y",
+    "KorName": "목표Y좌표",
+    "Type": "float",
+    "Range": "-200000.0 ~ 200000.0",
+    "LSB": 1,
+    "Default": 0.0,
+    "Unit": "cm",
+    "Format": "%.1f",
+    "Desc": "언리얼 월드 목표 Y 좌표 (100cm=1m)"
+  },
+  {
+    "No": 4,
+    "Name": "loc_z",
+    "KorName": "목표고도Z",
+    "Type": "float",
+    "Range": "0.0 ~ 50000.0",
+    "LSB": 1,
+    "Default": 6500.0,
+    "Unit": "cm",
+    "Format": "%.1f",
+    "Desc": "언리얼 월드 목표 고도 (ASL 절대고도)"
+  },
+  {
+    "No": 5,
+    "Name": "speed",
+    "KorName": "비행속도",
+    "Type": "float",
+    "Range": "100.0 ~ 3000.0",
+    "LSB": 1,
+    "Default": 1500.0,
+    "Unit": "cm/s",
+    "Format": "%.1f",
+    "Desc": "목표점 도달 속도 (1500cm/s = 15m/s = 54km/h)"
+  }
+]

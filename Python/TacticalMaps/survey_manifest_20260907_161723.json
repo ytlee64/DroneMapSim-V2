@@ -1,0 +1,1433 @@
+{
+  "metadata": {
+    "mission_name": "DroneMapSim_Autonomous_Survey",
+    "timestamp": "20260907_161723",
+    "altitude_m": 200.0,
+    "speed_ms": 18.0,
+    "camera_fov_h": 90.0,
+    "img_width": 1920,
+    "img_height": 1080,
+    "total_frames": 42,
+    "total_targets": 7
+  },
+  "frames": [
+    {
+      "frame_id": 1,
+      "timestamp": 1788765413.405088,
+      "img_path": "d:\\ytlee\\ureal\\DroneMapSim\\Saved\\Screenshots\\WindowsEditor\\Survey_Frame_20260904_174325_425.png",
+      "loc_cm": [
+        -4398.3,
+        -4000.0,
+        20000.0
+      ],
+      "loc_m": [
+        -43.98,
+        -40.0,
+        200.0
+      ],
+      "drone_rot": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "gimbal_rot": [
+        -85.0,
+        0.0
+      ],
+      "total_pitch": -85.0,
+      "total_yaw": 0.0
+    },
+    {
+      "frame_id": 2,
+      "timestamp": 1788765416.368593,
+      "img_path": "d:\\ytlee\\ureal\\DroneMapSim\\Saved\\Screenshots\\WindowsEditor\\Survey_Frame_20260907_161653_339.png",
+      "loc_cm": [
+        1001.7,
+        -4000.0,
+        20000.0
+      ],
+      "loc_m": [
+        10.02,
+        -40.0,
+        200.0
+      ],
+      "drone_rot": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "gimbal_rot": [
+        -85.0,
+        0.0
+      ],
+      "total_pitch": -85.0,
+      "total_yaw": 0.0
+    },
+    {
+      "frame_id": 3,
+      "timestamp": 1788765417.041197,
+      "img_path": "d:\\ytlee\\ureal\\DroneMapSim\\Saved\\Screenshots\\WindowsEditor\\Survey_Frame_20260907_161656_341.png",
+      "loc_cm": [
+        2201.7,
+        -4000.0,
+        20000.0
+      ],
+      "loc_m": [
+        22.02,
+        -40.0,
+        200.0
+      ],
+      "drone_rot": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "gimbal_rot": [
+        -85.0,
+        0.0
+      ],
+      "total_pitch": -85.0,
+      "total_yaw": 0.0
+    },
+    {
+      "frame_id": 4,
+      "timestamp": 1788765417.7012265,
+      "img_path": "d:\\ytlee\\ureal\\DroneMapSim\\Saved\\Screenshots\\WindowsEditor\\Survey_Frame_20260907_161657_005.png",
+      "loc_cm": [
+        3401.7,
+        -4000.0,
+        20000.0
+      ],
+      "loc_m": [
+        34.02,
+        -40.0,
+        200.0
+      ],
+      "drone_rot": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "gimbal_rot": [
+        -85.0,
+        0.0
+      ],
+      "total_pitch": -85.0,
+      "total_yaw": 0.0
+    },
+    {
+      "frame_id": 5,
+      "timestamp": 1788765418.370218,
+      "img_path": "d:\\ytlee\\ureal\\DroneMapSim\\Saved\\Screenshots\\WindowsEditor\\Survey_Frame_20260907_161657_674.png",
+      "loc_cm": [
+        4601.7,
+        -4000.0,
+        20000.0
+      ],
+      "loc_m": [
+        46.02,
+        -40.0,
+        200.0
+      ],
+      "drone_rot": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "gimbal_rot": [
+        -85.0,
+        0.0
+      ],
+      "total_pitch": -85.0,
+      "total_yaw": 0.0
+    },
+    {
+      "frame_id": 6,
+      "timestamp": 1788765419.0283813,
+      "img_path": "d:\\ytlee\\ureal\\DroneMapSim\\Saved\\Screenshots\\WindowsEditor\\Survey_Frame_20260907_161658_340.png",
+      "loc_cm": [
+        5000.0,
+        -4000.0,
+        20000.0
+      ],
+      "loc_m": [
+        50.0,
+        -40.0,
+        200.0
+      ],
+      "drone_rot": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "gimbal_rot": [
+        -85.0,
+        0.0
+      ],
+      "total_pitch": -85.0,
+      "total_yaw": 0.0
+    },
+    {
+      "frame_id": 7,
+      "timestamp": 1788765419.7042813,
+      "img_path": "d:\\ytlee\\ureal\\DroneMapSim\\Saved\\Screenshots\\WindowsEditor\\Survey_Frame_20260907_161659_006.png",
+      "loc_cm": [
+        4411.6,
+        -3882.3,
+        20000.0
+      ],
+      "loc_m": [
+        44.12,
+        -38.82,
+        200.0
+      ],
+      "drone_rot": [
+        0.0,
+        30.0,
+        0.0
+      ],
+      "gimbal_rot": [
+        -85.0,
+        0.0
+      ],
+      "total_pitch": -85.0,
+      "total_yaw": 30.0
+    },
+    {
+      "frame_id": 8,
+      "timestamp": 1788765420.3677573,
+      "img_path": "d:\\ytlee\\ureal\\DroneMapSim\\Saved\\Screenshots\\WindowsEditor\\Survey_Frame_20260907_161659_674.png",
+      "loc_cm": [
+        3233.3,
+        -3646.7,
+        20000.0
+      ],
+      "loc_m": [
+        32.33,
+        -36.47,
+        200.0
+      ],
+      "drone_rot": [
+        0.0,
+        90.08,
+        0.0
+      ],
+      "gimbal_rot": [
+        -85.0,
+        0.0
+      ],
+      "total_pitch": -85.0,
+      "total_yaw": 90.08
+    },
+    {
+      "frame_id": 9,
+      "timestamp": 1788765421.0393949,
+      "img_path": "d:\\ytlee\\ureal\\DroneMapSim\\Saved\\Screenshots\\WindowsEditor\\Survey_Frame_20260907_161700_341.png",
+      "loc_cm": [
+        2056.6,
+        -3411.3,
+        20000.0
+      ],
+      "loc_m": [
+        20.57,
+        -34.11,
+        200.0
+      ],
+      "drone_rot": [
+        0.0,
+        150.08,
+        0.0
+      ],
+      "gimbal_rot": [
+        -85.0,
+        0.0
+      ],
+      "total_pitch": -85.0,
+      "total_yaw": 150.08
+    },
+    {
+      "frame_id": 10,
+      "timestamp": 1788765421.6971598,
+      "img_path": "d:\\ytlee\\ureal\\DroneMapSim\\Saved\\Screenshots\\WindowsEditor\\Survey_Frame_20260907_161701_007.png",
+      "loc_cm": [
+        879.9,
+        -3176.0,
+        20000.0
+      ],
+      "loc_m": [
+        8.8,
+        -31.76,
+        200.0
+      ],
+      "drone_rot": [
+        0.0,
+        180.0,
+        0.0
+      ],
+      "gimbal_rot": [
+        -85.0,
+        0.0
+      ],
+      "total_pitch": -85.0,
+      "total_yaw": 180.0
+    },
+    {
+      "frame_id": 11,
+      "timestamp": 1788765422.365477,
+      "img_path": "d:\\ytlee\\ureal\\DroneMapSim\\Saved\\Screenshots\\WindowsEditor\\Survey_Frame_20260907_161701_674.png",
+      "loc_cm": [
+        -296.8,
+        -2940.6,
+        20000.0
+      ],
+      "loc_m": [
+        -2.97,
+        -29.41,
+        200.0
+      ],
+      "drone_rot": [
+        0.0,
+        180.0,
+        0.0
+      ],
+      "gimbal_rot": [
+        -85.0,
+        0.0
+      ],
+      "total_pitch": -85.0,
+      "total_yaw": 180.0
+    },
+    {
+      "frame_id": 12,
+      "timestamp": 1788765423.0405662,
+      "img_path": "d:\\ytlee\\ureal\\DroneMapSim\\Saved\\Screenshots\\WindowsEditor\\Survey_Frame_20260907_161702_341.png",
+      "loc_cm": [
+        -1473.5,
+        -2705.3,
+        20000.0
+      ],
+      "loc_m": [
+        -14.73,
+        -27.05,
+        200.0
+      ],
+      "drone_rot": [
+        0.0,
+        180.0,
+        0.0
+      ],
+      "gimbal_rot": [
+        -85.0,
+        0.0
+      ],
+      "total_pitch": -85.0,
+      "total_yaw": 180.0
+    },
+    {
+      "frame_id": 13,
+      "timestamp": 1788765423.6956463,
+      "img_path": "d:\\ytlee\\ureal\\DroneMapSim\\Saved\\Screenshots\\WindowsEditor\\Survey_Frame_20260907_161703_007.png",
+      "loc_cm": [
+        -2650.2,
+        -2470.0,
+        20000.0
+      ],
+      "loc_m": [
+        -26.5,
+        -24.7,
+        200.0
+      ],
+      "drone_rot": [
+        0.0,
+        180.0,
+        0.0
+      ],
+      "gimbal_rot": [
+        -85.0,
+        0.0
+      ],
+      "total_pitch": -85.0,
+      "total_yaw": 180.0
+    },
+    {
+      "frame_id": 14,
+      "timestamp": 1788765424.3656948,
+      "img_path": "d:\\ytlee\\ureal\\DroneMapSim\\Saved\\Screenshots\\WindowsEditor\\Survey_Frame_20260907_161703_674.png",
+      "loc_cm": [
+        -3826.9,
+        -2234.6,
+        20000.0
+      ],
+      "loc_m": [
+        -38.27,
+        -22.35,
+        200.0
+      ],
+      "drone_rot": [
+        0.0,
+        180.0,
+        0.0
+      ],
+      "gimbal_rot": [
+        -85.0,
+        0.0
+      ],
+      "total_pitch": -85.0,
+      "total_yaw": 180.0
+    },
+    {
+      "frame_id": 15,
+      "timestamp": 1788765425.026774,
+      "img_path": "d:\\ytlee\\ureal\\DroneMapSim\\Saved\\Screenshots\\WindowsEditor\\Survey_Frame_20260907_161704_342.png",
+      "loc_cm": [
+        -5000.0,
+        -2000.0,
+        20000.0
+      ],
+      "loc_m": [
+        -50.0,
+        -20.0,
+        200.0
+      ],
+      "drone_rot": [
+        0.0,
+        180.0,
+        0.0
+      ],
+      "gimbal_rot": [
+        -85.0,
+        0.0
+      ],
+      "total_pitch": -85.0,
+      "total_yaw": 180.0
+    },
+    {
+      "frame_id": 16,
+      "timestamp": 1788765425.7000713,
+      "img_path": "d:\\ytlee\\ureal\\DroneMapSim\\Saved\\Screenshots\\WindowsEditor\\Survey_Frame_20260907_161705_008.png",
+      "loc_cm": [
+        -4411.6,
+        -1882.3,
+        20000.0
+      ],
+      "loc_m": [
+        -44.12,
+        -18.82,
+        200.0
+      ],
+      "drone_rot": [
+        0.0,
+        -150.0,
+        0.0
+      ],
+      "gimbal_rot": [
+        -85.0,
+        0.0
+      ],
+      "total_pitch": -85.0,
+      "total_yaw": -150.0
+    },
+    {
+      "frame_id": 17,
+      "timestamp": 1788765426.37368,
+      "img_path": "d:\\ytlee\\ureal\\DroneMapSim\\Saved\\Screenshots\\WindowsEditor\\Survey_Frame_20260907_161705_674.png",
+      "loc_cm": [
+        -3234.9,
+        -1647.0,
+        20000.0
+      ],
+      "loc_m": [
+        -32.35,
+        -16.47,
+        200.0
+      ],
+      "drone_rot": [
+        0.0,
+        -90.0,
+        0.0
+      ],
+      "gimbal_rot": [
+        -85.0,
+        0.0
+      ],
+      "total_pitch": -85.0,
+      "total_yaw": -90.0
+    },
+    {
+      "frame_id": 18,
+      "timestamp": 1788765427.029278,
+      "img_path": "d:\\ytlee\\ureal\\DroneMapSim\\Saved\\Screenshots\\WindowsEditor\\Survey_Frame_20260907_161706_342.png",
+      "loc_cm": [
+        -2056.7,
+        -1411.3,
+        20000.0
+      ],
+      "loc_m": [
+        -20.57,
+        -14.11,
+        200.0
+      ],
+      "drone_rot": [
+        0.0,
+        -29.92,
+        0.0
+      ],
+      "gimbal_rot": [
+        -85.0,
+        0.0
+      ],
+      "total_pitch": -85.0,
+      "total_yaw": -29.92
+    },
+    {
+      "frame_id": 19,
+      "timestamp": 1788765427.698196,
+      "img_path": "d:\\ytlee\\ureal\\DroneMapSim\\Saved\\Screenshots\\WindowsEditor\\Survey_Frame_20260907_161707_009.png",
+      "loc_cm": [
+        -880.0,
+        -1176.0,
+        20000.0
+      ],
+      "loc_m": [
+        -8.8,
+        -11.76,
+        200.0
+      ],
+      "drone_rot": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "gimbal_rot": [
+        -85.0,
+        0.0
+      ],
+      "total_pitch": -85.0,
+      "total_yaw": 0.0
+    },
+    {
+      "frame_id": 20,
+      "timestamp": 1788765428.3722844,
+      "img_path": "d:\\ytlee\\ureal\\DroneMapSim\\Saved\\Screenshots\\WindowsEditor\\Survey_Frame_20260907_161707_676.png",
+      "loc_cm": [
+        296.7,
+        -940.7,
+        20000.0
+      ],
+      "loc_m": [
+        2.97,
+        -9.41,
+        200.0
+      ],
+      "drone_rot": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "gimbal_rot": [
+        -85.0,
+        0.0
+      ],
+      "total_pitch": -85.0,
+      "total_yaw": 0.0
+    },
+    {
+      "frame_id": 21,
+      "timestamp": 1788765429.043138,
+      "img_path": "d:\\ytlee\\ureal\\DroneMapSim\\Saved\\Screenshots\\WindowsEditor\\Survey_Frame_20260907_161708_342.png",
+      "loc_cm": [
+        1473.4,
+        -705.3,
+        20000.0
+      ],
+      "loc_m": [
+        14.73,
+        -7.05,
+        200.0
+      ],
+      "drone_rot": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "gimbal_rot": [
+        -85.0,
+        0.0
+      ],
+      "total_pitch": -85.0,
+      "total_yaw": 0.0
+    },
+    {
+      "frame_id": 22,
+      "timestamp": 1788765429.70006,
+      "img_path": "d:\\ytlee\\ureal\\DroneMapSim\\Saved\\Screenshots\\WindowsEditor\\Survey_Frame_20260907_161709_010.png",
+      "loc_cm": [
+        2650.8,
+        -469.9,
+        20000.0
+      ],
+      "loc_m": [
+        26.51,
+        -4.7,
+        200.0
+      ],
+      "drone_rot": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "gimbal_rot": [
+        -85.0,
+        0.0
+      ],
+      "total_pitch": -85.0,
+      "total_yaw": 0.0
+    },
+    {
+      "frame_id": 23,
+      "timestamp": 1788765430.3686326,
+      "img_path": "d:\\ytlee\\ureal\\DroneMapSim\\Saved\\Screenshots\\WindowsEditor\\Survey_Frame_20260907_161709_677.png",
+      "loc_cm": [
+        3827.4,
+        -234.5,
+        20000.0
+      ],
+      "loc_m": [
+        38.27,
+        -2.35,
+        200.0
+      ],
+      "drone_rot": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "gimbal_rot": [
+        -85.0,
+        0.0
+      ],
+      "total_pitch": -85.0,
+      "total_yaw": 0.0
+    },
+    {
+      "frame_id": 24,
+      "timestamp": 1788765431.040491,
+      "img_path": "d:\\ytlee\\ureal\\DroneMapSim\\Saved\\Screenshots\\WindowsEditor\\Survey_Frame_20260907_161710_343.png",
+      "loc_cm": [
+        5000.0,
+        0.0,
+        20000.0
+      ],
+      "loc_m": [
+        50.0,
+        0.0,
+        200.0
+      ],
+      "drone_rot": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "gimbal_rot": [
+        -85.0,
+        0.0
+      ],
+      "total_pitch": -85.0,
+      "total_yaw": 0.0
+    },
+    {
+      "frame_id": 25,
+      "timestamp": 1788765431.6996207,
+      "img_path": "d:\\ytlee\\ureal\\DroneMapSim\\Saved\\Screenshots\\WindowsEditor\\Survey_Frame_20260907_161711_012.png",
+      "loc_cm": [
+        4411.6,
+        117.7,
+        20000.0
+      ],
+      "loc_m": [
+        44.12,
+        1.18,
+        200.0
+      ],
+      "drone_rot": [
+        0.0,
+        30.0,
+        0.0
+      ],
+      "gimbal_rot": [
+        -85.0,
+        0.0
+      ],
+      "total_pitch": -85.0,
+      "total_yaw": 30.0
+    },
+    {
+      "frame_id": 26,
+      "timestamp": 1788765432.3750439,
+      "img_path": "d:\\ytlee\\ureal\\DroneMapSim\\Saved\\Screenshots\\WindowsEditor\\Survey_Frame_20260907_161711_675.png",
+      "loc_cm": [
+        3234.9,
+        353.0,
+        20000.0
+      ],
+      "loc_m": [
+        32.35,
+        3.53,
+        200.0
+      ],
+      "drone_rot": [
+        0.0,
+        90.0,
+        0.0
+      ],
+      "gimbal_rot": [
+        -85.0,
+        0.0
+      ],
+      "total_pitch": -85.0,
+      "total_yaw": 90.0
+    },
+    {
+      "frame_id": 27,
+      "timestamp": 1788765433.035571,
+      "img_path": "d:\\ytlee\\ureal\\DroneMapSim\\Saved\\Screenshots\\WindowsEditor\\Survey_Frame_20260907_161712_343.png",
+      "loc_cm": [
+        2058.3,
+        588.4,
+        20000.0
+      ],
+      "loc_m": [
+        20.58,
+        5.88,
+        200.0
+      ],
+      "drone_rot": [
+        0.0,
+        150.0,
+        0.0
+      ],
+      "gimbal_rot": [
+        -85.0,
+        0.0
+      ],
+      "total_pitch": -85.0,
+      "total_yaw": 150.0
+    },
+    {
+      "frame_id": 28,
+      "timestamp": 1788765433.6986492,
+      "img_path": "d:\\ytlee\\ureal\\DroneMapSim\\Saved\\Screenshots\\WindowsEditor\\Survey_Frame_20260907_161713_009.png",
+      "loc_cm": [
+        881.5,
+        823.7,
+        20000.0
+      ],
+      "loc_m": [
+        8.82,
+        8.24,
+        200.0
+      ],
+      "drone_rot": [
+        0.0,
+        180.0,
+        0.0
+      ],
+      "gimbal_rot": [
+        -85.0,
+        0.0
+      ],
+      "total_pitch": -85.0,
+      "total_yaw": 180.0
+    },
+    {
+      "frame_id": 29,
+      "timestamp": 1788765434.3767993,
+      "img_path": "d:\\ytlee\\ureal\\DroneMapSim\\Saved\\Screenshots\\WindowsEditor\\Survey_Frame_20260907_161713_676.png",
+      "loc_cm": [
+        -295.2,
+        1059.0,
+        20000.0
+      ],
+      "loc_m": [
+        -2.95,
+        10.59,
+        200.0
+      ],
+      "drone_rot": [
+        0.0,
+        180.0,
+        0.0
+      ],
+      "gimbal_rot": [
+        -85.0,
+        0.0
+      ],
+      "total_pitch": -85.0,
+      "total_yaw": 180.0
+    },
+    {
+      "frame_id": 30,
+      "timestamp": 1788765435.0369527,
+      "img_path": "d:\\ytlee\\ureal\\DroneMapSim\\Saved\\Screenshots\\WindowsEditor\\Survey_Frame_20260907_161714_342.png",
+      "loc_cm": [
+        -1471.8,
+        1294.4,
+        20000.0
+      ],
+      "loc_m": [
+        -14.72,
+        12.94,
+        200.0
+      ],
+      "drone_rot": [
+        0.0,
+        180.0,
+        0.0
+      ],
+      "gimbal_rot": [
+        -85.0,
+        0.0
+      ],
+      "total_pitch": -85.0,
+      "total_yaw": 180.0
+    },
+    {
+      "frame_id": 31,
+      "timestamp": 1788765435.7105148,
+      "img_path": "d:\\ytlee\\ureal\\DroneMapSim\\Saved\\Screenshots\\WindowsEditor\\Survey_Frame_20260907_161715_008.png",
+      "loc_cm": [
+        -2649.5,
+        1529.9,
+        20000.0
+      ],
+      "loc_m": [
+        -26.5,
+        15.3,
+        200.0
+      ],
+      "drone_rot": [
+        0.0,
+        180.0,
+        0.0
+      ],
+      "gimbal_rot": [
+        -85.0,
+        0.0
+      ],
+      "total_pitch": -85.0,
+      "total_yaw": 180.0
+    },
+    {
+      "frame_id": 32,
+      "timestamp": 1788765436.3678129,
+      "img_path": "d:\\ytlee\\ureal\\DroneMapSim\\Saved\\Screenshots\\WindowsEditor\\Survey_Frame_20260907_161715_677.png",
+      "loc_cm": [
+        -3826.2,
+        1765.2,
+        20000.0
+      ],
+      "loc_m": [
+        -38.26,
+        17.65,
+        200.0
+      ],
+      "drone_rot": [
+        0.0,
+        180.0,
+        0.0
+      ],
+      "gimbal_rot": [
+        -85.0,
+        0.0
+      ],
+      "total_pitch": -85.0,
+      "total_yaw": 180.0
+    },
+    {
+      "frame_id": 33,
+      "timestamp": 1788765437.065098,
+      "img_path": "d:\\ytlee\\ureal\\DroneMapSim\\Saved\\Screenshots\\WindowsEditor\\Survey_Frame_20260907_161716_344.png",
+      "loc_cm": [
+        -5000.0,
+        2000.0,
+        20000.0
+      ],
+      "loc_m": [
+        -50.0,
+        20.0,
+        200.0
+      ],
+      "drone_rot": [
+        0.0,
+        180.0,
+        0.0
+      ],
+      "gimbal_rot": [
+        -85.0,
+        0.0
+      ],
+      "total_pitch": -85.0,
+      "total_yaw": 180.0
+    },
+    {
+      "frame_id": 34,
+      "timestamp": 1788765437.70146,
+      "img_path": "d:\\ytlee\\ureal\\DroneMapSim\\Saved\\Screenshots\\WindowsEditor\\Survey_Frame_20260907_161717_010.png",
+      "loc_cm": [
+        -4411.6,
+        2117.7,
+        20000.0
+      ],
+      "loc_m": [
+        -44.12,
+        21.18,
+        200.0
+      ],
+      "drone_rot": [
+        0.0,
+        -150.0,
+        0.0
+      ],
+      "gimbal_rot": [
+        -85.0,
+        0.0
+      ],
+      "total_pitch": -85.0,
+      "total_yaw": -150.0
+    },
+    {
+      "frame_id": 35,
+      "timestamp": 1788765438.3777258,
+      "img_path": "d:\\ytlee\\ureal\\DroneMapSim\\Saved\\Screenshots\\WindowsEditor\\Survey_Frame_20260907_161717_677.png",
+      "loc_cm": [
+        -3234.9,
+        2353.0,
+        20000.0
+      ],
+      "loc_m": [
+        -32.35,
+        23.53,
+        200.0
+      ],
+      "drone_rot": [
+        0.0,
+        -90.0,
+        0.0
+      ],
+      "gimbal_rot": [
+        -85.0,
+        0.0
+      ],
+      "total_pitch": -85.0,
+      "total_yaw": -90.0
+    },
+    {
+      "frame_id": 36,
+      "timestamp": 1788765439.034196,
+      "img_path": "d:\\ytlee\\ureal\\DroneMapSim\\Saved\\Screenshots\\WindowsEditor\\Survey_Frame_20260907_161718_344.png",
+      "loc_cm": [
+        -2058.3,
+        2588.3,
+        20000.0
+      ],
+      "loc_m": [
+        -20.58,
+        25.88,
+        200.0
+      ],
+      "drone_rot": [
+        0.0,
+        -30.0,
+        0.0
+      ],
+      "gimbal_rot": [
+        -85.0,
+        0.0
+      ],
+      "total_pitch": -85.0,
+      "total_yaw": -30.0
+    },
+    {
+      "frame_id": 37,
+      "timestamp": 1788765439.709412,
+      "img_path": "d:\\ytlee\\ureal\\DroneMapSim\\Saved\\Screenshots\\WindowsEditor\\Survey_Frame_20260907_161719_011.png",
+      "loc_cm": [
+        -881.6,
+        2823.7,
+        20000.0
+      ],
+      "loc_m": [
+        -8.82,
+        28.24,
+        200.0
+      ],
+      "drone_rot": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "gimbal_rot": [
+        -85.0,
+        0.0
+      ],
+      "total_pitch": -85.0,
+      "total_yaw": 0.0
+    },
+    {
+      "frame_id": 38,
+      "timestamp": 1788765440.3657196,
+      "img_path": "d:\\ytlee\\ureal\\DroneMapSim\\Saved\\Screenshots\\WindowsEditor\\Survey_Frame_20260907_161719_678.png",
+      "loc_cm": [
+        295.7,
+        3059.2,
+        20000.0
+      ],
+      "loc_m": [
+        2.96,
+        30.59,
+        200.0
+      ],
+      "drone_rot": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "gimbal_rot": [
+        -85.0,
+        0.0
+      ],
+      "total_pitch": -85.0,
+      "total_yaw": 0.0
+    },
+    {
+      "frame_id": 39,
+      "timestamp": 1788765441.0404806,
+      "img_path": "d:\\ytlee\\ureal\\DroneMapSim\\Saved\\Screenshots\\WindowsEditor\\Survey_Frame_20260907_161720_344.png",
+      "loc_cm": [
+        1472.4,
+        3294.5,
+        20000.0
+      ],
+      "loc_m": [
+        14.72,
+        32.94,
+        200.0
+      ],
+      "drone_rot": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "gimbal_rot": [
+        -85.0,
+        0.0
+      ],
+      "total_pitch": -85.0,
+      "total_yaw": 0.0
+    },
+    {
+      "frame_id": 40,
+      "timestamp": 1788765441.6982625,
+      "img_path": "d:\\ytlee\\ureal\\DroneMapSim\\Saved\\Screenshots\\WindowsEditor\\Survey_Frame_20260907_161721_010.png",
+      "loc_cm": [
+        2649.1,
+        3529.8,
+        20000.0
+      ],
+      "loc_m": [
+        26.49,
+        35.3,
+        200.0
+      ],
+      "drone_rot": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "gimbal_rot": [
+        -85.0,
+        0.0
+      ],
+      "total_pitch": -85.0,
+      "total_yaw": 0.0
+    },
+    {
+      "frame_id": 41,
+      "timestamp": 1788765442.3716793,
+      "img_path": "d:\\ytlee\\ureal\\DroneMapSim\\Saved\\Screenshots\\WindowsEditor\\Survey_Frame_20260907_161721_678.png",
+      "loc_cm": [
+        3826.2,
+        3765.2,
+        20000.0
+      ],
+      "loc_m": [
+        38.26,
+        37.65,
+        200.0
+      ],
+      "drone_rot": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "gimbal_rot": [
+        -85.0,
+        0.0
+      ],
+      "total_pitch": -85.0,
+      "total_yaw": 0.0
+    },
+    {
+      "frame_id": 42,
+      "timestamp": 1788765443.0425544,
+      "img_path": "d:\\ytlee\\ureal\\DroneMapSim\\Saved\\Screenshots\\WindowsEditor\\Survey_Frame_20260907_161722_344.png",
+      "loc_cm": [
+        5000.0,
+        4000.0,
+        20000.0
+      ],
+      "loc_m": [
+        50.0,
+        40.0,
+        200.0
+      ],
+      "drone_rot": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "gimbal_rot": [
+        -85.0,
+        0.0
+      ],
+      "total_pitch": -85.0,
+      "total_yaw": 0.0
+    }
+  ],
+  "targets": [
+    {
+      "id": "TGT-01",
+      "type": "TARGET_33",
+      "confidence": 0.721,
+      "world_x": 138.39,
+      "world_y": -68.73,
+      "hits": 1,
+      "detected_frame": "Survey_Frame_20260907_161658_340.png",
+      "time": "16:16:59"
+    },
+    {
+      "id": "TGT-02",
+      "type": "TARGET_33",
+      "confidence": 0.553,
+      "world_x": -94.79,
+      "world_y": 5.14,
+      "hits": 1,
+      "detected_frame": "Survey_Frame_20260907_161701_674.png",
+      "time": "16:17:02"
+    },
+    {
+      "id": "TGT-03",
+      "type": "TARGET_33",
+      "confidence": 0.508,
+      "world_x": 120.9,
+      "world_y": -30.65,
+      "hits": 1,
+      "detected_frame": "Survey_Frame_20260907_161709_010.png",
+      "time": "16:17:09"
+    },
+    {
+      "id": "TGT-04",
+      "type": "TARGET_33",
+      "confidence": 0.574,
+      "world_x": 144.37,
+      "world_y": -25.94,
+      "hits": 1,
+      "detected_frame": "Survey_Frame_20260907_161710_343.png",
+      "time": "16:17:11"
+    },
+    {
+      "id": "TGT-05",
+      "type": "TARGET_33",
+      "confidence": 0.47,
+      "world_x": 114.38,
+      "world_y": 16.11,
+      "hits": 1,
+      "detected_frame": "Survey_Frame_20260907_161711_012.png",
+      "time": "16:17:11"
+    },
+    {
+      "id": "TGT-06",
+      "type": "TARGET_33",
+      "confidence": 0.451,
+      "world_x": 120.93,
+      "world_y": 9.24,
+      "hits": 1,
+      "detected_frame": "Survey_Frame_20260907_161721_010.png",
+      "time": "16:17:21"
+    },
+    {
+      "id": "TGT-07",
+      "type": "TARGET_33",
+      "confidence": 0.515,
+      "world_x": 144.42,
+      "world_y": 13.95,
+      "hits": 1,
+      "detected_frame": "Survey_Frame_20260907_161722_344.png",
+      "time": "16:17:23"
+    }
+  ],
+  "flight_trail": [
+    {
+      "t": 1788765413.31,
+      "x": -43.98,
+      "y": -40.0,
+      "z": 200.0
+    },
+    {
+      "t": 1788765416.32,
+      "x": 10.02,
+      "y": -40.0,
+      "z": 200.0
+    },
+    {
+      "t": 1788765416.99,
+      "x": 22.02,
+      "y": -40.0,
+      "z": 200.0
+    },
+    {
+      "t": 1788765417.65,
+      "x": 34.02,
+      "y": -40.0,
+      "z": 200.0
+    },
+    {
+      "t": 1788765418.32,
+      "x": 46.02,
+      "y": -40.0,
+      "z": 200.0
+    },
+    {
+      "t": 1788765418.98,
+      "x": 50.0,
+      "y": -40.0,
+      "z": 200.0
+    },
+    {
+      "t": 1788765419.65,
+      "x": 44.12,
+      "y": -38.82,
+      "z": 200.0
+    },
+    {
+      "t": 1788765420.32,
+      "x": 32.33,
+      "y": -36.47,
+      "z": 200.0
+    },
+    {
+      "t": 1788765420.99,
+      "x": 20.57,
+      "y": -34.11,
+      "z": 200.0
+    },
+    {
+      "t": 1788765421.65,
+      "x": 8.8,
+      "y": -31.76,
+      "z": 200.0
+    },
+    {
+      "t": 1788765422.31,
+      "x": -2.97,
+      "y": -29.41,
+      "z": 200.0
+    },
+    {
+      "t": 1788765422.99,
+      "x": -14.73,
+      "y": -27.05,
+      "z": 200.0
+    },
+    {
+      "t": 1788765423.64,
+      "x": -26.5,
+      "y": -24.7,
+      "z": 200.0
+    },
+    {
+      "t": 1788765424.31,
+      "x": -38.27,
+      "y": -22.35,
+      "z": 200.0
+    },
+    {
+      "t": 1788765424.98,
+      "x": -50.0,
+      "y": -20.0,
+      "z": 200.0
+    },
+    {
+      "t": 1788765425.65,
+      "x": -44.12,
+      "y": -18.82,
+      "z": 200.0
+    },
+    {
+      "t": 1788765426.32,
+      "x": -32.35,
+      "y": -16.47,
+      "z": 200.0
+    },
+    {
+      "t": 1788765426.98,
+      "x": -20.57,
+      "y": -14.11,
+      "z": 200.0
+    },
+    {
+      "t": 1788765427.65,
+      "x": -8.8,
+      "y": -11.76,
+      "z": 200.0
+    },
+    {
+      "t": 1788765428.32,
+      "x": 2.97,
+      "y": -9.41,
+      "z": 200.0
+    },
+    {
+      "t": 1788765428.99,
+      "x": 14.73,
+      "y": -7.05,
+      "z": 200.0
+    },
+    {
+      "t": 1788765429.65,
+      "x": 26.51,
+      "y": -4.7,
+      "z": 200.0
+    },
+    {
+      "t": 1788765430.32,
+      "x": 38.27,
+      "y": -2.35,
+      "z": 200.0
+    },
+    {
+      "t": 1788765430.99,
+      "x": 50.0,
+      "y": 0.0,
+      "z": 200.0
+    },
+    {
+      "t": 1788765431.65,
+      "x": 44.12,
+      "y": 1.18,
+      "z": 200.0
+    },
+    {
+      "t": 1788765432.32,
+      "x": 32.35,
+      "y": 3.53,
+      "z": 200.0
+    },
+    {
+      "t": 1788765432.98,
+      "x": 20.58,
+      "y": 5.88,
+      "z": 200.0
+    },
+    {
+      "t": 1788765433.65,
+      "x": 8.82,
+      "y": 8.24,
+      "z": 200.0
+    },
+    {
+      "t": 1788765434.32,
+      "x": -2.95,
+      "y": 10.59,
+      "z": 200.0
+    },
+    {
+      "t": 1788765434.98,
+      "x": -14.72,
+      "y": 12.94,
+      "z": 200.0
+    },
+    {
+      "t": 1788765435.66,
+      "x": -26.5,
+      "y": 15.3,
+      "z": 200.0
+    },
+    {
+      "t": 1788765436.32,
+      "x": -38.26,
+      "y": 17.65,
+      "z": 200.0
+    },
+    {
+      "t": 1788765436.99,
+      "x": -50.0,
+      "y": 20.0,
+      "z": 200.0
+    },
+    {
+      "t": 1788765437.65,
+      "x": -44.12,
+      "y": 21.18,
+      "z": 200.0
+    },
+    {
+      "t": 1788765438.33,
+      "x": -32.35,
+      "y": 23.53,
+      "z": 200.0
+    },
+    {
+      "t": 1788765438.98,
+      "x": -20.58,
+      "y": 25.88,
+      "z": 200.0
+    },
+    {
+      "t": 1788765439.66,
+      "x": -8.82,
+      "y": 28.24,
+      "z": 200.0
+    },
+    {
+      "t": 1788765440.31,
+      "x": 2.96,
+      "y": 30.59,
+      "z": 200.0
+    },
+    {
+      "t": 1788765440.99,
+      "x": 14.72,
+      "y": 32.94,
+      "z": 200.0
+    },
+    {
+      "t": 1788765441.65,
+      "x": 26.49,
+      "y": 35.3,
+      "z": 200.0
+    },
+    {
+      "t": 1788765442.32,
+      "x": 38.26,
+      "y": 37.65,
+      "z": 200.0
+    },
+    {
+      "t": 1788765442.99,
+      "x": 50.0,
+      "y": 40.0,
+      "z": 200.0
+    }
+  ]
+}

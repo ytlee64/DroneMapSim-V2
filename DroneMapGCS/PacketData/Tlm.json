@@ -1,0 +1,170 @@
+[
+  {
+    "No": 0,
+    "Name": "Id",
+    "KorName": "패킷아이디",
+    "Type": "uint32_t",
+    "Range": "0 ~ 2^32",
+    "LSB": 1,
+    "Default": 0,
+    "Unit": "-",
+    "Desc": "패킷 식별 ID (0x11: Telemetry Packet)"
+  },
+  {
+    "No": 1,
+    "Name": "seq",
+    "KorName": "패킷순번",
+    "Type": "uint32_t",
+    "Range": "0 ~ 2^32-1",
+    "LSB": 1,
+    "Default": 0,
+    "Unit": "-",
+    "Desc": "통신 누락/손실 확인용 시퀀스 번호"
+  },
+  {
+    "No": 2,
+    "Name": "loc_x",
+    "KorName": "드론위치X",
+    "Type": "float32",
+    "Range": "-200000.0 ~ 200000.0",
+    "LSB": 1,
+    "Default": 0.0,
+    "Unit": "cm",
+    "Desc": "언리얼 X 좌표 (동/서 방향, 100cm=1m)"
+  },
+  {
+    "No": 3,
+    "Name": "loc_y",
+    "KorName": "드론위치Y",
+    "Type": "float32",
+    "Range": "-200000.0 ~ 200000.0",
+    "LSB": 1,
+    "Default": 0.0,
+    "Unit": "cm",
+    "Desc": "언리얼 Y 좌표 (남/북 방향, 100cm=1m)"
+  },
+  {
+    "No": 4,
+    "Name": "loc_z",
+    "KorName": "드론고도Z",
+    "Type": "float32",
+    "Range": "0.0 ~ 50000.0",
+    "LSB": 1,
+    "Default": 0.0,
+    "Unit": "cm",
+    "Desc": "언리얼 Z 절대고도 (ASL)"
+  },
+  {
+    "No": 5,
+    "Name": "rot_pitch",
+    "KorName": "기체자세Pitch",
+    "Type": "float32",
+    "Range": "-90.0 ~ 90.0",
+    "LSB": 1,
+    "Default": 0.0,
+    "Unit": "deg",
+    "Desc": "기체 기수 상하 기울기"
+  },
+  {
+    "No": 6,
+    "Name": "rot_yaw",
+    "KorName": "기체헤딩Yaw",
+    "Type": "float32",
+    "Range": "-180.0 ~ 180.0",
+    "LSB": 1,
+    "Default": 0.0,
+    "Unit": "deg",
+    "Desc": "기체 진행 방위각 (북쪽 0도 기준)"
+  },
+  {
+    "No": 7,
+    "Name": "rot_roll",
+    "KorName": "기체자세Roll",
+    "Type": "float32",
+    "Range": "-180.0 ~ 180.0",
+    "LSB": 1,
+    "Default": 0.0,
+    "Unit": "deg",
+    "Desc": "기체 좌우 롤링 각도"
+  },
+  {
+    "No": 8,
+    "Name": "gimbal_pitch",
+    "KorName": "짐벌각도Pitch",
+    "Type": "float32",
+    "Range": "-90.0 ~ 20.0",
+    "LSB": 1,
+    "Default": -90.0,
+    "Unit": "deg",
+    "Desc": "카메라 상하 각도 (-85도:수직직하, -60도:사선)"
+  },
+  {
+    "No": 9,
+    "Name": "gimbal_yaw",
+    "KorName": "짐벌각도Yaw",
+    "Type": "float32",
+    "Range": "-180.0 ~ 180.0",
+    "LSB": 1,
+    "Default": 0.0,
+    "Unit": "deg",
+    "Desc": "카메라 좌우 팬 각도 (기체 기준 상대각)"
+  },
+  {
+    "No": 10,
+    "Name": "speed",
+    "KorName": "대지속도",
+    "Type": "float32",
+    "Range": "0.0 ~ 5000.0",
+    "LSB": 1,
+    "Default": 0.0,
+    "Unit": "cm/s",
+    "Desc": "드론 비행 속도 (1800cm/s = 18m/s = 64.8km/h)"
+  },
+  {
+    "No": 11,
+    "Name": "reached",
+    "KorName": "도달여부",
+    "Type": "uint32_t",
+    "Range": "0 / 1",
+    "LSB": 1,
+    "Default": 1,
+    "Unit": "-",
+    "Desc": "자율비행 목표점 도달 완료 플래그"
+  },
+  {
+    "No": 12,
+    "Name": "mode",
+    "KorName": "비행모드",
+    "Type": "string",
+    "size": 20,
+    "Range": "-",
+    "LSB": "-",
+    "Default": "MANUAL",
+    "Unit": "-",
+    "Desc": "드론 제어 모드 (AUTO / HOVER / MANUAL / ORBIT)"
+  },
+  {
+    "No": 13,
+    "Name": "observer_mode",
+    "KorName": "관찰자모드",
+    "Type": "string",
+    "size": 20,
+    "Range": "-",
+    "LSB": "-",
+    "Default": "CHASE",
+    "Unit": "-",
+    "Desc": "시점 모드 (CHASE / STATIONARY / TOP_DOWN / FREE_ROAM)"
+  },
+  {
+    "No": 14,
+    "Name": "gimbal_mode",
+    "KorName": "짐벌결합모드",
+    "Type": "string",
+    "size": 20,
+    "Range": "-",
+    "LSB": "-",
+    "Default": "YawOuter",
+    "Unit": "-",
+    "Desc": "짐벌 물리 축 결합 우선순위 모드(YawOuter,PitchOuter),"
+  }
+]

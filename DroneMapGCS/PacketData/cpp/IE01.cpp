@@ -1,0 +1,16 @@
+﻿pktIE01.Reserved_0 = 0;
+pktIE01.Reserved_1 = 0;
+pktIE01.Reserved_2 = 0;
+pktIE01.Reserved_3 = 0;
+pktIE01.Reserved_4 = 0;
+pktIE01.Reserved_5 = 0;
+pktIE01.Reserved_6 = 0;
+pktIE01.Reserved_7 = 0;
+pktIE01.Reserved_8 = 0;
+pktIE01.Reserved_9 = 0;
+pktIE01.Reserved_10 = 0;
+pktIE01.Reserved_11 = 0;
+pktIE01.Reserved_12 = 0;
+pktIE01.Reserved_13 = 0;
+pktIE01.Reserved_14 = 0;
+pktIE01.Reserved_15 = 0;

@@ -1,0 +1,38 @@
+[
+  {
+    "No": 0,
+    "Name": "id",
+    "KorName": "명령식별자",
+    "Type": "string",
+    "Range": "-",
+    "LSB": "-",
+    "Default": "CAPTURE",
+    "Unit": "-",
+    "Format": "%s",
+    "Desc": "고해상도 카메라 캡처 트리거 명령 식별자"
+  },
+  {
+    "No": 1,
+    "Name": "seq",
+    "KorName": "명령순번",
+    "Type": "uint32_t",
+    "Range": "0 ~ 2^32-1",
+    "LSB": 1,
+    "Default": 0,
+    "Unit": "-",
+    "Format": "%d",
+    "Desc": "명령 시퀀스 카운터"
+  },
+  {
+    "No": 2,
+    "Name": "capture_name",
+    "KorName": "저장파일명",
+    "Type": "string",
+    "Range": "-",
+    "LSB": "-",
+    "Default": "frame_0001.png",
+    "Unit": "-",
+    "Format": "%s",
+    "Desc": "언리얼 디스크에 저장될 이미지 파일명 (예: ortho_001.png)"
+  }
+]

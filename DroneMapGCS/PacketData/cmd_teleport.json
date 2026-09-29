@@ -1,0 +1,74 @@
+[
+  {
+    "No": 0,
+    "Name": "id",
+    "KorName": "명령식별자",
+    "Type": "string",
+    "Range": "-",
+    "LSB": "-",
+    "Default": "TELEPORT",
+    "Unit": "-",
+    "Format": "%s",
+    "Desc": "시뮬레이터 전용 즉시 순간이동 명령 식별자"
+  },
+  {
+    "No": 1,
+    "Name": "seq",
+    "KorName": "명령순번",
+    "Type": "uint32_t",
+    "Range": "0 ~ 2^32-1",
+    "LSB": 1,
+    "Default": 0,
+    "Unit": "-",
+    "Format": "%d",
+    "Desc": "명령 시퀀스 카운터"
+  },
+  {
+    "No": 2,
+    "Name": "loc_x",
+    "KorName": "배치X좌표",
+    "Type": "float",
+    "Range": "-200000.0 ~ 200000.0",
+    "LSB": 1,
+    "Default": 0.0,
+    "Unit": "cm",
+    "Format": "%.1f",
+    "Desc": "순간이동할 언리얼 X 좌표"
+  },
+  {
+    "No": 3,
+    "Name": "loc_y",
+    "KorName": "배치Y좌표",
+    "Type": "float",
+    "Range": "-200000.0 ~ 200000.0",
+    "LSB": 1,
+    "Default": 0.0,
+    "Unit": "cm",
+    "Format": "%.1f",
+    "Desc": "순간이동할 언리얼 Y 좌표"
+  },
+  {
+    "No": 4,
+    "Name": "loc_z",
+    "KorName": "배치고도Z",
+    "Type": "float",
+    "Range": "0.0 ~ 50000.0",
+    "LSB": 1,
+    "Default": 6500.0,
+    "Unit": "cm",
+    "Format": "%.1f",
+    "Desc": "순간이동할 언리얼 고도"
+  },
+  {
+    "No": 5,
+    "Name": "rot_yaw",
+    "KorName": "기체헤딩Yaw",
+    "Type": "float",
+    "Range": "-180.0 ~ 180.0",
+    "LSB": 1,
+    "Default": 0.0,
+    "Unit": "deg",
+    "Format": "%.1f",
+    "Desc": "배치 시 초기 기수 진행 방위각 (북쪽 0° 기준)"
+  }
+]
