@@ -4,7 +4,6 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Kismet/GameplayStatics.h"
 #include "DronePawn.h"
-#include "EnvGenActor.h" // 지형 중심 및 고도 조회를 위해 추가
 
 AObserverPawn::AObserverPawn()
 {
@@ -89,14 +88,7 @@ void AObserverPawn::EnterTopDownMode()
     // 드론과의 부착 해제 (독립된 Top-Down 관제 카메라로 전환)
     DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 
-    // ⭐ EnvGenActor에게 랜드스케이프의 진짜 정중앙 좌표를 물어봄 (기존 0,0 하드코딩 제거!)
     FVector TopDownPos = FVector(0.0f, 0.0f, TopDownAltCm);
-    AEnvGenActor* EnvGen = Cast<AEnvGenActor>(UGameplayStatics::GetActorOfClass(GetWorld(), AEnvGenActor::StaticClass()));
-    if (EnvGen)
-    {
-        TopDownPos = EnvGen->GetMapCenterWithAltitude(TopDownAltCm);
-    }
-
     SetActorLocation(TopDownPos);
 
     // 바닥 수직 직하방(-90도) 주시

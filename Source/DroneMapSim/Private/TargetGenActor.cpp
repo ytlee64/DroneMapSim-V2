@@ -1,6 +1,6 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
-#include "EnvGenActor.h"
+#include "TargetGenActor.h"
 #include "Engine/World.h"
 #include "Engine/StaticMesh.h"
 #include "Components/HierarchicalInstancedStaticMeshComponent.h"
@@ -12,7 +12,7 @@
 #include "Misc/Paths.h"
 #include "Kismet/GameplayStatics.h"
 
-AEnvGenActor::AEnvGenActor()
+ATargetGenActor::ATargetGenActor()
 {
 	PrimaryActorTick.bCanEverTick = false;
 
@@ -26,7 +26,7 @@ AEnvGenActor::AEnvGenActor()
 	FallbackBoundsExtent = FVector(50000.0f, 50000.0f, 10000.0f);
 }
 
-void AEnvGenActor::BeginPlay()
+void ATargetGenActor::BeginPlay()
 {
 	Super::BeginPlay();
 
@@ -34,9 +34,9 @@ void AEnvGenActor::BeginPlay()
 }
 
 // -----------------------------------------------------------------------------
-// [°øÅë ÇïÆÛ]: ¿ùµåÀÇ ¸ðµç Landscape/Proxy¸¦ ¼öÁýÇÏ¿© ÅëÇÕ BoundingBox¸¦ °è»ê
+// [ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½]: ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ Landscape/Proxyï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï¿ï¿½ ï¿½ï¿½ï¿½ï¿½ BoundingBoxï¿½ï¿½ ï¿½ï¿½ï¿½
 // -----------------------------------------------------------------------------
-FBox AEnvGenActor::GetTotalLandscapeBounds(TArray<AActor*>& OutLandscapeActors)
+FBox ATargetGenActor::GetTotalLandscapeBounds(TArray<AActor*>& OutLandscapeActors)
 {
 	OutLandscapeActors.Empty();
 	FBox TotalBox(ForceInit);
@@ -63,7 +63,7 @@ FBox AEnvGenActor::GetTotalLandscapeBounds(TArray<AActor*>& OutLandscapeActors)
 	return TotalBox;
 }
 
-void AEnvGenActor::CalculateLandscapeBounds()
+void ATargetGenActor::CalculateLandscapeBounds()
 {
 	TArray<AActor*> LandscapePieces;
 	FBox TotalBox = GetTotalLandscapeBounds(LandscapePieces);
@@ -73,22 +73,22 @@ void AEnvGenActor::CalculateLandscapeBounds()
 		CachedMapCenter = TotalBox.GetCenter();
 		CachedMapExtent = TotalBox.GetExtent();
 
-		UE_LOG(LogTemp, Warning, TEXT("[EnvGenActor] Landscape Analyzed!"));
+		UE_LOG(LogTemp, Warning, TEXT("[TargetGenActor] Landscape Analyzed!"));
 		UE_LOG(LogTemp, Warning, TEXT(" -> Center: X=%.1f, Y=%.1f, Z=%.1f"), CachedMapCenter.X, CachedMapCenter.Y, CachedMapCenter.Z);
 		UE_LOG(LogTemp, Warning, TEXT(" -> Size: %.1f km x %.1f km"), (CachedMapExtent.X * 2.0f) / 100000.0f, (CachedMapExtent.Y * 2.0f) / 100000.0f);
 	}
 	else
 	{
-		UE_LOG(LogTemp, Error, TEXT("[EnvGenActor] No Landscape found in world! Fallback to (0,0,0)"));
+		UE_LOG(LogTemp, Error, TEXT("[TargetGenActor] No Landscape found in world! Fallback to (0,0,0)"));
 		CachedMapCenter = FVector::ZeroVector;
 		CachedMapExtent = FallbackBoundsExtent;
 	}
 }
 
 // -----------------------------------------------------------------------------
-// [½ºÆù ÁÂÇ¥ ¹ÝÈ¯]: ·£µå½ºÄÉÀÌÇÁ Áß½ÉÀÇ Áö¸éÀ» ·¹ÀÌÆ®·¹ÀÌ½ºÇÏ¿© ¾ÈÀü °íµµ Á¦°ø
+// [ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ç¥ ï¿½ï¿½È¯]: ï¿½ï¿½ï¿½å½ºï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ß½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ï¿½Ì½ï¿½ï¿½Ï¿ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 // -----------------------------------------------------------------------------
-FVector AEnvGenActor::GetTerrainSpawnLocation(float DesiredAlt)
+FVector ATargetGenActor::GetTerrainSpawnLocation(float DesiredAlt)
 {
 	TArray<AActor*> LandscapePieces;
 	FBox TotalBox = GetTotalLandscapeBounds(LandscapePieces);
@@ -110,11 +110,11 @@ FVector AEnvGenActor::GetTerrainSpawnLocation(float DesiredAlt)
 		return FVector(Center.X, Center.Y, TotalBox.Max.Z + DesiredAlt);
 	}
 
-	// ·£µå½ºÄÉÀÌÇÁ°¡ ¾øÀ» °æ¿ì ±âº»°ª
+	// ï¿½ï¿½ï¿½å½ºï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½âº»ï¿½ï¿½
 	return FVector(0.0f, 0.0f, DesiredAlt);
 }
 
-void AEnvGenActor::ClearEnvironment()
+void ATargetGenActor::ClearEnvironment()
 {
 	Modify();
 
@@ -133,7 +133,7 @@ void AEnvGenActor::ClearEnvironment()
 	UE_LOG(LogTemp, Log, TEXT("[EnvGen] Cleared all existing instances and target records."));
 }
 
-void AEnvGenActor::SetupHISMComponents()
+void ATargetGenActor::SetupHISMComponents()
 {
 	ClearEnvironment();
 
@@ -178,7 +178,7 @@ void AEnvGenActor::SetupHISMComponents()
 	}
 }
 
-void AEnvGenActor::GenerateEnvironment()
+void ATargetGenActor::GenerateEnvironment()
 {
 	UE_LOG(LogTemp, Log, TEXT("=================================================="));
 	UE_LOG(LogTemp, Log, TEXT("[EnvGen] STARTING GENERATION"));
@@ -197,7 +197,7 @@ void AEnvGenActor::GenerateEnvironment()
 		return;
 	}
 
-	// 1. °øÅë ÇÔ¼ö¸¦ »ç¿ëÇÏ¿© ÅëÇÕ ¹Ù¿îµù ¹Ú½º È¹µæ
+	// 1. ï¿½ï¿½ï¿½ï¿½ ï¿½Ô¼ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ï¿ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ù¿ï¿½ï¿½ ï¿½Ú½ï¿½ È¹ï¿½ï¿½
 	TArray<AActor*> AllLandscapeActors;
 	FBox TotalLandscapeBounds = GetTotalLandscapeBounds(AllLandscapeActors);
 
@@ -376,7 +376,7 @@ void AEnvGenActor::GenerateEnvironment()
 	}
 }
 
-bool AEnvGenActor::ExportTargetsToJson(const FString& FileName)
+bool ATargetGenActor::ExportTargetsToJson(const FString& FileName)
 {
 	FString SaveDirectory = FPaths::ProjectSavedDir() / TEXT("Datasets");
 	IFileManager::Get().MakeDirectory(*SaveDirectory, true);

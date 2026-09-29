@@ -9,7 +9,7 @@ In Unreal Engine (UE5), class and type prefixes are not merely stylistic choices
 | Prefix | Type Category | Description | Examples |
 | :--- | :--- | :--- | :--- |
 | **`A`** | **Actor** | Classes inheriting directly or indirectly from `AActor`. Can be placed or spawned into the 3D level. | `ADronePawn`, `AActor`, `ACharacter`, `AGameModeBase` |
-| **`U`** | **UObject** | Classes inheriting from `UObject` (excluding Actors). Managed by Unreal GC and UObject reflection. | `UActorComponent`, `UStaticMeshComponent`, `UDroneCommandReceiver`, `UTexture2D` |
+| **`U`** | **UObject** | Classes inheriting from `UObject` (excluding Actors). Managed by Unreal GC and UObject reflection. | `UActorComponent`, `UStaticMeshComponent`, `UCommLink`, `UTexture2D` |
 | **`F`** | **Frame / Plain C++** | Plain C++ structs, math primitives, and utility classes (not garbage collected). | `FVector`, `FRotator`, `FTransform`, `FString`, `FSocket`, `FHitResult` |
 | **`T`** | **Template** | Template classes, standard containers, and smart pointers. | `TArray<T>`, `TMap<Key, Value>`, `TSharedPtr<T>`, `TObjectPtr<T>`, `TWeakObjectPtr<T>` |
 | **`I`** | **Interface** | Abstract interface classes defining contracts for multiple classes. | `IInterface`, `ISocketSubsystem`, `IAbilitySystemInterface` |
@@ -22,7 +22,7 @@ In Unreal Engine (UE5), class and type prefixes are not merely stylistic choices
 | Prefix | Type | Rule / Purpose | Examples |
 | :--- | :--- | :--- | :--- |
 | **`b`** | **Boolean** | All boolean member variables must start with a lowercase `b`. | `bIsFlying`, `bWaypointReached`, `bCaptureEveryFrame` |
-| *PascalCase* | **Other Variables** | All other variables, member pointers, and functions use PascalCase. | `TargetLocation`, `FlightSpeed`, `CommandReceiver` |
+| *PascalCase* | **Other Variables** | All other variables, member pointers, and functions use PascalCase. | `TargetLocation`, `FlightSpeed`, `CommLink` |
 
 ---
 
@@ -58,7 +58,7 @@ struct FDroneTelemetryPacket
 };
 
 // U: UObject / ActorComponent (No 3D position by itself)
-class UDroneCommandReceiver : public UActorComponent
+class UCommLink : public UActorComponent
 {
     // ...
 };
@@ -67,5 +67,5 @@ class UDroneCommandReceiver : public UActorComponent
 class ADronePawn : public APawn
 {
     // T: Template pointer, U: Component
-    TObjectPtr<UDroneCommandReceiver> CommandReceiver; 
+    TObjectPtr<UCommLink> CommLink; 
 };

@@ -62,7 +62,7 @@ __pycache__/
 *.pyd
 .ipynb_checkpoints/
 
-# 파이썬 가상환경 (.venv 또는 env)
+# 파이썬 가상타겟 (.venv 또는 env)
 .venv/
 venv/
 env/

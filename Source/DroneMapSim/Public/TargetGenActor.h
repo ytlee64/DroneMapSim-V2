@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "EnvGenActor.generated.h"
+#include "TargetGenActor.generated.h"
 
 class UStaticMesh;
 class UHierarchicalInstancedStaticMeshComponent;
@@ -89,15 +89,15 @@ struct FEnvTargetRecord
 };
 
 // =============================================================================
-// 환경 관리 및 생성기 액터 (AEnvGenActor)
+// 타겟 관리 및 생성기 액터 (ATargetGenActor)
 // =============================================================================
 UCLASS()
-class DRONEMAPSIM_API AEnvGenActor : public AActor
+class DRONEMAPSIM_API ATargetGenActor : public AActor
 {
 	GENERATED_BODY()
 
 public:
-	AEnvGenActor();
+	ATargetGenActor();
 
 	// -------------------------------------------------------------------------
 	// 1. 외부 액터(드론, 관찰자 등)를 위한 좌표/지형 인터페이스
@@ -118,7 +118,7 @@ public:
 	FVector GetTerrainSpawnLocation(float DesiredAlt = 3000.0f);
 
 	// -------------------------------------------------------------------------
-	// 2. 환경 생성 및 관리 에디터 버튼 (CallInEditor)
+	// 2. 타겟 생성 및 관리 에디터 버튼 (CallInEditor)
 	// -------------------------------------------------------------------------
 	UFUNCTION(BlueprintCallable, CallInEditor, Category = "EnvGen")
 	void GenerateEnvironment();

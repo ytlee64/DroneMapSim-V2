@@ -12,7 +12,7 @@ class UArrowComponent;
 class UStaticMeshComponent;
 class USceneCaptureComponent2D;
 class UTextureRenderTarget2D;
-class UDroneCommandReceiver;
+class UCommLink;
 
 
 // =============================================================================
@@ -102,7 +102,7 @@ public:
     TObjectPtr<USceneCaptureComponent2D> DroneCameraComp;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Drone|Components")
-    TObjectPtr<UDroneCommandReceiver> CommandReceiver;
+    TObjectPtr<UCommLink> CommLink;
 
     // 촬영 렌더타깃 에셋
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Drone|Camera")

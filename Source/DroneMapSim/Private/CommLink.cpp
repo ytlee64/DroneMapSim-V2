@@ -1,4 +1,4 @@
-﻿#include "DroneCommandReceiver.h"
+﻿#include "CommLink.h"
 #include "Engine/World.h"
 #include "Engine/Engine.h"
 #include "GameFramework/Actor.h"
@@ -12,7 +12,7 @@
 #include "DronePawn.h"
 #include "ObserverPawn.h"
 
-UDroneCommandReceiver::UDroneCommandReceiver()
+UCommLink::UCommLink()
 {
 	PrimaryComponentTick.bCanEverTick = true;
 }
@@ -20,7 +20,7 @@ UDroneCommandReceiver::UDroneCommandReceiver()
 // -------------------------------------------------------------
 // [핵심] BeginPlay에서 딱 1번만 드론, 옵저버, 짐벌을 찾아 캐싱
 // -------------------------------------------------------------
-void UDroneCommandReceiver::InitializeReferences()
+void UCommLink::InitializeReferences()
 {
 	UWorld* World = GetWorld();
 	if (!World) return;
@@ -41,7 +41,7 @@ void UDroneCommandReceiver::InitializeReferences()
 }
 
 // 짐벌 컴포넌트 1회 탐색 바인딩
-void UDroneCommandReceiver::FindGimbalComponents(AActor* DroneActor)
+void UCommLink::FindGimbalComponents(AActor* DroneActor)
 {
 	if (!DroneActor) return;
 
@@ -61,7 +61,7 @@ void UDroneCommandReceiver::FindGimbalComponents(AActor* DroneActor)
 	}
 }
 
-void UDroneCommandReceiver::BeginPlay()
+void UCommLink::BeginPlay()
 {
 	Super::BeginPlay();
 
@@ -78,13 +78,13 @@ void UDroneCommandReceiver::BeginPlay()
 	StartListening();
 }
 
-void UDroneCommandReceiver::EndPlay(const EEndPlayReason::Type EndPlayReason)
+void UCommLink::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	StopListening();
 	Super::EndPlay(EndPlayReason);
 }
 
-void UDroneCommandReceiver::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+void UCommLink::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
@@ -103,7 +103,7 @@ void UDroneCommandReceiver::TickComponent(float DeltaTime, ELevelTick TickType, 
 	}
 }
 
-void UDroneCommandReceiver::StartListening()
+void UCommLink::StartListening()
 {
 	FIPv4Address Addr;
 	FIPv4Address::Parse(TEXT("0.0.0.0"), Addr);
@@ -122,11 +122,11 @@ void UDroneCommandReceiver::StartListening()
 
 	if (ListenSocket)
 	{
-		UE_LOG(LogTemp, Log, TEXT("[UDroneCommandReceiver] UDP 명령 수신 대기 (포트: %d)"), ListenPort);
+		UE_LOG(LogTemp, Log, TEXT("[UCommLink] UDP 명령 수신 대기 (포트: %d)"), ListenPort);
 	}
 }
 
-void UDroneCommandReceiver::StopListening()
+void UCommLink::StopListening()
 {
 	if (ListenSocket)
 	{
@@ -147,7 +147,7 @@ void UDroneCommandReceiver::StopListening()
 // -------------------------------------------------------------
 // 1. 키보드 입력 -> JSON 명령으로 변환 후 ProcessJsonCommand 호출
 // -------------------------------------------------------------
-void UDroneCommandReceiver::ProcessInputKeyboard()
+void UCommLink::ProcessInputKeyboard()
 {
 	APlayerController* PC = GetWorld()->GetFirstPlayerController();
 	if (!PC || !CachedDronePawn) return;
@@ -209,7 +209,7 @@ void UDroneCommandReceiver::ProcessInputKeyboard()
 // -------------------------------------------------------------
 // 2. UDP 수신 패킷 -> 원문 그대로 ProcessJsonCommand 호출
 // -------------------------------------------------------------
-void UDroneCommandReceiver::ProcessIncomingData()
+void UCommLink::ProcessIncomingData()
 {
 	if (!ListenSocket) return;
 
@@ -239,9 +239,9 @@ void UDroneCommandReceiver::ProcessIncomingData()
 // -------------------------------------------------------------
 // 3. [단일 명령 처리 센터] 모든 명령(UDP + 키보드) 집행
 // -------------------------------------------------------------
-void UDroneCommandReceiver::ProcessJsonCommand(const FString& JsonString)
+void UCommLink::ProcessJsonCommand(const FString& JsonString)
 {
-	UE_LOG(LogTemp, Log, TEXT("[UDroneCommandReceiver] Received JSON Command: %s"), *JsonString);
+	UE_LOG(LogTemp, Log, TEXT("[UCommLink] Received JSON Command: %s"), *JsonString);
 
 	TSharedPtr<FJsonObject> JsonObj;
 	TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(JsonString);
@@ -387,7 +387,7 @@ void UDroneCommandReceiver::ProcessJsonCommand(const FString& JsonString)
 				CaptureIntervalSec
 			);
 
-			UE_LOG(LogTemp, Log, TEXT("[UDroneCommandReceiver] Loaded %d Waypoints (LoiterRadius: %.1f cm, PeriodicCapture: %s)"),
+			UE_LOG(LogTemp, Log, TEXT("[UCommLink] Loaded %d Waypoints (LoiterRadius: %.1f cm, PeriodicCapture: %s)"),
 				ParsedWaypoints.Num(),
 				LoiterRadius_cm,
 				bPeriodicCapture ? TEXT("True") : TEXT("False"));
@@ -395,7 +395,7 @@ void UDroneCommandReceiver::ProcessJsonCommand(const FString& JsonString)
 	}
 }
 
-void UDroneCommandReceiver::SendTelemetry()
+void UCommLink::SendTelemetry()
 {
 	if (!CachedDronePawn) return;
 

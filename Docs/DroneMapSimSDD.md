@@ -30,7 +30,7 @@
 
 ## 2. 세부 개발 내용 및 최근 업데이트 내역
 
-### 2.1. 언리얼 C++ 드론 비행 제어 및 입력 처리 (`UDroneCommandReceiver`)
+### 2.1. 언리얼 C++ 드론 비행 제어 및 입력 처리 (`UCommLink`)
 
 #### 1) 단발성 키보드 입력 체계 개선 (`ProcessInputKeyboard`)
 - 기존 `IsInputKeyDown()`의 연속 호출로 인한 제어 폭주 문제를 해결하기 위해, `WasInputKeyJustPressed()` 기반으로 전면 리팩터링

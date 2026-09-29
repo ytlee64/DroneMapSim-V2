@@ -20,7 +20,7 @@ TARGET_NAMES = {
     "ScanPyramid": "BP_ScanPyramid",
     "Observer": "BP_ObserverPawn",
     "GameMode": "BP_DroneMapSimGameMode",
-    "EnvGenerator": "EnvGenActor",  # 또는 C++ AEnvGenActor
+    "TargetGenerator": "TargetGenActor",  
     "ScanGround": "M_ScanGround",
     "ScanProjection": "M_ScanProjection",
     "RenderTarget": "RT_DroneCapture"
@@ -44,9 +44,9 @@ ENV_GEN_PARAMS = {
 TARGET_MESH_PATH = "/Game/LevelPrototyping/Meshes"
 
 
-ENV_ELEMENT_CONFIGS = [
+TARGET_ELEMENT_CONFIGS = [
     {
-        "name": "자동차",
+        "name": "세단",
         "mesh_name": "SM_Dummy_Vehicle_Sedan_01",
         "mesh_path": f"{TARGET_MESH_PATH}/SM_Dummy_Vehicle_Sedan_01",
         "weight": 0.01,         # 희소 배치
@@ -57,7 +57,7 @@ ENV_ELEMENT_CONFIGS = [
         "target_class_id": 0  # 0: Vehicle / Car
     },
     {
-        "name": "자동차",
+        "name": "밴",
         "mesh_name": "SM_Dummy_Vehicle_Van_01",
         "mesh_path": f"{TARGET_MESH_PATH}/SM_Dummy_Vehicle_Van_01",
         "weight": 0.01,         # 희소 배치
@@ -65,6 +65,7 @@ ENV_ELEMENT_CONFIGS = [
         "scale_min": 1.0,
         "scale_max": 1.0,
         "b_is_target": False,
+        "target_class_id": -1
     },
     # {
     #     "name": "메인 소나무",

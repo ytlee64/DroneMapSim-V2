@@ -1,6 +1,6 @@
 # DroneMapSim GCS ↔ UE5 UDP JSON 통신 프로토콜 명세서 (Communication Protocol Specification v2.0)
 
-본 문서는 **지상관제국(Python GCS / C# WPF GCS)**과 **언리얼 엔진 5 드론 시뮬레이터(UE5 ADronePawn / UDroneCommandReceiver)** 간의 양방향 UDP 통신 규격, 제어 명령(Commands), 관찰자 카메라 제어, 실시간 텔레메트리(Telemetry) 스트림 포맷 및 고도별 최적 파라미터 표준을 정의합니다.
+본 문서는 **지상관제국(Python GCS / C# WPF GCS)**과 **언리얼 엔진 5 드론 시뮬레이터(UE5 ADronePawn / UCommLink)** 간의 양방향 UDP 통신 규격, 제어 명령(Commands), 관찰자 카메라 제어, 실시간 텔레메트리(Telemetry) 스트림 포맷 및 고도별 최적 파라미터 표준을 정의합니다.
 
 ---
 
@@ -11,7 +11,7 @@ DroneMapSim은 실시간성과 경량성을 보장하고 특정 프로그래밍 
 ```
 +-----------------------------------+                       +---------------------------------------+
 |       GCS 지상관제국              |                       |         UE5 드론 시뮬레이터           |
-| (Python GCS / C# WPF Controller)  |                       |   (ADronePawn + DroneCommandReceiver) |
+| (Python GCS / C# WPF Controller)  |                       |   (ADronePawn + CommLink) |
 +-----------------------------------+                       +---------------------------------------+
                   |                                                             |
                   | ----------- [Port 9000] JSON 제어 명령 (비동기) -----------> |
@@ -252,10 +252,10 @@ GCS의 키보드(WASD), 조이스틱, 게임패드 신호를 드론 기체 로�
 
 ## 6. 소스 코드 구현 레퍼런스
 
-### 6.1. 언리얼 엔진 5 C++ 명령 처리 구현 (`DroneCommandReceiver.cpp`)
+### 6.1. 언리얼 엔진 5 C++ 명령 처리 구현 (`CommLink.cpp`)
 
 ```cpp
-void UDroneCommandReceiver::ProcessJsonCommand(const FString& JsonString)
+void UCommLink::ProcessJsonCommand(const FString& JsonString)
 {
     TSharedPtr<FJsonObject> JsonObj;
     TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(JsonString);

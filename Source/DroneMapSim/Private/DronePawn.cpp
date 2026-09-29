@@ -1,7 +1,7 @@
 ﻿// DronePawn.cpp
 #include "DronePawn.h"
-#include "DroneCommandReceiver.h"
-#include "EnvGenActor.h"
+#include "CommLink.h"
+#include "TargetGenActor.h"
 #include "ObserverPawn.h"
 #include "ScanProjection.h"
 
@@ -90,21 +90,21 @@ ADronePawn::ADronePawn()
     NavFlySpeed = 1500.0f;
 
     // 6. 명령 수신 컴포넌트 및 짐벌 연결
-    CommandReceiver = CreateDefaultSubobject<UDroneCommandReceiver>(TEXT("CommandReceiver"));
-    CommandReceiver->GimbalComponentYaw = GimbalOuterAxisComp;
-    CommandReceiver->GimbalComponentPitch = GimbalInnerAxisComp;
+    CommLink = CreateDefaultSubobject<UCommLink>(TEXT("CommLink"));
+    CommLink->GimbalComponentYaw = GimbalOuterAxisComp;
+    CommLink->GimbalComponentPitch = GimbalInnerAxisComp;
 }
 
 void ADronePawn::BeginPlay()
 {
     Super::BeginPlay();
 
-    // 1. 환경 관리자(EnvGenActor)에게 30m 고도의 지형 스폰 좌표를 질의하여 안착
-    AEnvGenActor* EnvGen = Cast<AEnvGenActor>(UGameplayStatics::GetActorOfClass(GetWorld(), AEnvGenActor::StaticClass()));
-    if (EnvGen)
+    // 1. 타겟 관리자(TargetGenActor)에게 30m 고도의 지형 스폰 좌표를 질의하여 안착
+    ATargetGenActor* TargetGen = Cast<ATargetGenActor>(UGameplayStatics::GetActorOfClass(GetWorld(), ATargetGenActor::StaticClass()));
+    if (TargetGen)
     {
         const float SpawnAlt = 3000.0f; // 30m 고도
-        FVector SpawnLoc = EnvGen->GetTerrainSpawnLocation(SpawnAlt);
+        FVector SpawnLoc = TargetGen->GetTerrainSpawnLocation(SpawnAlt);
         SetActorLocation(SpawnLoc, false, nullptr, ETeleportType::TeleportPhysics);
     }
 
@@ -306,13 +306,13 @@ void ADronePawn::ToggleGimbalMode()
 
     if (CurrentGimbalMode == EGimbalMode::YawOuter_PitchInner)
     {
-        CommandReceiver->GimbalComponentYaw = GimbalOuterAxisComp;
-        CommandReceiver->GimbalComponentPitch = GimbalInnerAxisComp;
+        CommLink->GimbalComponentYaw = GimbalOuterAxisComp;
+        CommLink->GimbalComponentPitch = GimbalInnerAxisComp;
     }
     else
     {
-        CommandReceiver->GimbalComponentYaw = GimbalInnerAxisComp;
-        CommandReceiver->GimbalComponentPitch = GimbalOuterAxisComp;
+        CommLink->GimbalComponentYaw = GimbalInnerAxisComp;
+        CommLink->GimbalComponentPitch = GimbalOuterAxisComp;
     }
 }
 
@@ -355,10 +355,10 @@ void ADronePawn::ExecuteCapture()
     FString YoloLabelString = TEXT("");
     int32 VisibleTargetCount = 0;
 
-    AEnvGenActor* EnvGen = Cast<AEnvGenActor>(UGameplayStatics::GetActorOfClass(GetWorld(), AEnvGenActor::StaticClass()));
-    if (EnvGen)
+    ATargetGenActor* TargetGen = Cast<ATargetGenActor>(UGameplayStatics::GetActorOfClass(GetWorld(), ATargetGenActor::StaticClass()));
+    if (TargetGen)
     {
-        const TArray<FEnvTargetRecord>& TargetList = EnvGen->GetSpawnedTargets();
+        const TArray<FEnvTargetRecord>& TargetList = TargetGen->GetSpawnedTargets();
         for (const FEnvTargetRecord& Target : TargetList)
         {
             FTransform TargetTransform(Target.WorldRotation, Target.WorldLocation);

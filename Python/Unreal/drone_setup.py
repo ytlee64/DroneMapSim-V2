@@ -25,7 +25,7 @@ def log_step(step, msg):
 
 TARGET_NAMES = {
     "Drone": "BP_DronePawn",
-    "CommandReceiver": "DroneCommandReceiver",           # C++ or BP Component
+    "CommLink": "CommLink",           # C++ or BP Component
     "ScanProjection": "BP_ScanProjection",
     "Observer": "BP_ObserverPawn",
     "GameMode": "BP_DroneMapSimGameMode",
@@ -39,7 +39,7 @@ CLEAR_KEYWORDS = [
     "BP_DronePawn",
     "BP_ScanProjection", 
     "BP_ObserverPawn",
-    "DroneCommandReceiver",
+    "CommLink",
 ]
 
 
@@ -146,13 +146,13 @@ def spawn_drone(editor_actor_subsystem, spawn_center, asset_reg, asset_lib):
         cap.set_editor_property("bCaptureEveryFrame", False)
         log_info("  + Capture source configured -> FinalColor (LDR)")
 
-    # 2. Verify Native C++ DroneCommandReceiver Component
-    receiver_class_name = TARGET_NAMES["CommandReceiver"]
-    receiver = next((c for c in drone_actor.get_components_by_class(unreal.ActorComponent)
-                     if receiver_class_name.lower() in c.get_class().get_name().lower()), None)
+    # 2. Verify Native C++ CommLink Component
+    commlink_class_name = TARGET_NAMES["CommLink"]
+    commlink = next((c for c in drone_actor.get_components_by_class(unreal.ActorComponent)
+                     if commlink_class_name.lower() in c.get_class().get_name().lower()), None)
 
-    if receiver:
-        log_info(f"  + Native C++ '{receiver_class_name}' component verified: {receiver.get_name()}")
+    if commlink:
+        log_info(f"  + Native C++ '{commlink_class_name}' component verified: {commlink.get_name()}")
 
         # # Check & Link GimbalComponent
         # current_gimbal = receiver.get_editor_property("GimbalComponent")
@@ -163,7 +163,7 @@ def spawn_drone(editor_actor_subsystem, spawn_center, asset_reg, asset_lib):
         #         receiver.set_editor_property("GimbalComponent", target_gimbal)
         #         log_info(f"  + GimbalComponent auto-linked -> '{target_gimbal.get_name()}'")
     else:
-        log_warn(f"  ! Native '{receiver_class_name}' not found on Drone. Ensure it is initialized in C++ constructor.")
+        log_warn(f"  ! Native '{commlink_class_name}' not found on Drone. Ensure it is initialized in C++ constructor.")
 
     return drone_actor
 

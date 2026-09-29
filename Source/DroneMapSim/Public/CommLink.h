@@ -5,7 +5,7 @@
 #include "Sockets.h"
 #include "Networking.h"
 #include "WaypointItemData.h"
-#include "DroneCommandReceiver.generated.h"
+#include "CommLink.generated.h"
 
 
 class UStaticMeshComponent;
@@ -13,12 +13,12 @@ class ADronePawn;
 class AObserverPawn;
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
-class DRONEMAPSIM_API UDroneCommandReceiver : public UActorComponent
+class DRONEMAPSIM_API UCommLink : public UActorComponent
 {
 	GENERATED_BODY()
 
 public:
-	UDroneCommandReceiver();
+	UCommLink();
 
 protected:
 	virtual void BeginPlay() override;
