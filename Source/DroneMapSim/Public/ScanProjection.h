@@ -3,15 +3,15 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "ProceduralMeshComponent.h" 
-#include "ScanPyramid.generated.h"
+#include "ScanProjection.generated.h"
 
 UCLASS()
-class DRONEMAPSIM_API AScanPyramid : public AActor
+class DRONEMAPSIM_API AScanProjection : public AActor
 {
     GENERATED_BODY()
 
 public:
-    AScanPyramid();
+    AScanProjection();
 
 protected:
     virtual void BeginPlay() override;

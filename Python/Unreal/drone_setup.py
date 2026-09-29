@@ -26,18 +26,18 @@ def log_step(step, msg):
 TARGET_NAMES = {
     "Drone": "BP_DronePawn",
     "CommandReceiver": "DroneCommandReceiver",           # C++ or BP Component
-    "ScanPyramid": "BP_ScanPyramid",
+    "ScanProjection": "BP_ScanProjection",
     "Observer": "BP_ObserverPawn",
     "GameMode": "BP_DroneMapSimGameMode",
-    "ScanGround": "M_ScanGround",
-    "ScanProjection": "M_ScanProjection",
+    "MaterialScanGround": "M_ScanGround",
+    "MaterialScanProjection": "M_ScanProjection",
     "RenderTarget": "RT_DroneCapture",
     "MinimapUI": "WBP_MinimapUI"
 }
 
 CLEAR_KEYWORDS = [
     "BP_DronePawn",
-    "BP_ScanPyramid", 
+    "BP_ScanProjection", 
     "BP_ObserverPawn",
     "DroneCommandReceiver",
 ]
@@ -169,14 +169,14 @@ def spawn_drone(editor_actor_subsystem, spawn_center, asset_reg, asset_lib):
 
 
 def spawn_scan_and_observer(editor_actor_subsystem, spawn_center, asset_reg, asset_lib):
-    scan_class = load_bp_class_by_name(TARGET_NAMES["ScanPyramid"], asset_reg, asset_lib)
+    scan_class = load_bp_class_by_name(TARGET_NAMES["ScanProjection"], asset_reg, asset_lib)
     if scan_class:
         scan_actor = editor_actor_subsystem.spawn_actor_from_class(scan_class, spawn_center)
         if scan_actor:
-            log_step(4, "BP_ScanPyramid spawned successfully")
+            log_step(4, "BP_ScanProjection spawned successfully")
 
-            m_ground = load_object_by_name(TARGET_NAMES["ScanGround"], asset_reg, asset_lib)
-            m_proj = load_object_by_name(TARGET_NAMES["ScanProjection"], asset_reg, asset_lib)
+            m_ground = load_object_by_name(TARGET_NAMES["MaterialScanGround"], asset_reg, asset_lib)
+            m_proj = load_object_by_name(TARGET_NAMES["MaterialScanProjection"], asset_reg, asset_lib)
 
             mesh_comps = scan_actor.get_components_by_class(unreal.MeshComponent)
             for mesh in mesh_comps:
@@ -188,7 +188,7 @@ def spawn_scan_and_observer(editor_actor_subsystem, spawn_center, asset_reg, ass
                     mesh.set_material(0, m_proj)
                     log_info(f"  + Projection mesh material applied -> '{m_proj.get_name()}'")
     else:
-        log_warn(f"Class '{TARGET_NAMES['ScanPyramid']}' not found, skipping.")
+        log_warn(f"Class '{TARGET_NAMES['ScanProjection']}' not found, skipping.")
 
     observer_class = load_bp_class_by_name(TARGET_NAMES["Observer"], asset_reg, asset_lib)
     if observer_class:

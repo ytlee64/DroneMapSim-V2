@@ -3,7 +3,7 @@
 #include "DroneCommandReceiver.h"
 #include "EnvGenActor.h"
 #include "ObserverPawn.h"
-#include "ScanPyramid.h"
+#include "ScanProjection.h"
 
 #include "ImageUtils.h"
 #include "Misc/FileHelper.h"
@@ -116,7 +116,7 @@ void ADronePawn::BeginPlay()
 
     // 3. 월드 내 모든 스캔 피라미드 카메라 뷰에서 숨김
     TArray<AActor*> FoundPyramids;
-    UGameplayStatics::GetAllActorsOfClass(GetWorld(), AScanPyramid::StaticClass(), FoundPyramids);
+    UGameplayStatics::GetAllActorsOfClass(GetWorld(), AScanProjection::StaticClass(), FoundPyramids);
     for (AActor* PyramidActor : FoundPyramids)
     {
         DroneCameraComp->HiddenActors.AddUnique(PyramidActor);

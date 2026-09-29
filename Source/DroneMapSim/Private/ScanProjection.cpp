@@ -1,8 +1,8 @@
-﻿#include "ScanPyramid.h"
+﻿#include "ScanProjection.h"
 #include "Components/SceneCaptureComponent2D.h"
 #include "Kismet/GameplayStatics.h"
 
-AScanPyramid::AScanPyramid()
+AScanProjection::AScanProjection()
 {
     PrimaryActorTick.bCanEverTick = true;
 
@@ -27,7 +27,7 @@ AScanPyramid::AScanPyramid()
     PrimaryActorTick.TickGroup = TG_PostPhysics;
 }
 
-void AScanPyramid::BeginPlay()
+void AScanProjection::BeginPlay()
 {
     Super::BeginPlay();
 
@@ -37,7 +37,7 @@ void AScanPyramid::BeginPlay()
     }
 }
 
-void AScanPyramid::Tick(float DeltaTime)
+void AScanProjection::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
