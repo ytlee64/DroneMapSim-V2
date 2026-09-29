@@ -2,13 +2,13 @@
 
 ---
 
-## 1. 프로젝트 개요 및 최신 환경 아키텍처
+## 1. 프로젝트 개요 및 아키텍처
 
 ### 1.1. 프로젝트 목적 및 핵심 개발 방향
-- **드론 항공 카메라 기반 지상 객체(Vehicle) 식별 AI 학습, 자율 수색 비행 및 실시간 디지털 전술 지도(Digital Tactical Map) 맵핑 파이프라인 구축**
-  - **드론 정밀 비행 및 다축 관제**: 언리얼 엔진 5.7 C++ 기반의 오차 없는 미터(m) 단위 정밀 비행, 2축 짐벌 제어, 관찰자(Observer) 자유/추적 시점 전환
+- **드론 항공 카메라 기반 지상 객체(Vehicle) 식별 AI 학습, 자율 수색 비행 및 실시간 디지털 전술 지도(Digital Tactical Map) 매핑 파이프라인 구축**
+  - **드론 정밀 비행 및 기체 다형성 아키텍처**: 언리얼 엔진 5.7 C++ 기반의 고정익(Fixed-Wing) 비행 물리, 뱅킹 턴(Bank-Turn) 역학, 2축 짐벌 제어, 관찰자(Observer) 자유/추적 시점 전환
   - **양방향 네트워크 관제 시스템**: 언리얼 시뮬레이터(C++)와 지상 관제 시스템(C# GCS / Python) 간의 비동기 논블로킹 UDP JSON 통신 프로토콜 구축
-  - **대규모 합성 데이터셋 자동화 수집**: 다중 고도/각도 격자 비행을 통한 고해상도 렌더타깃 이미지 및 2D 투영 바운딩 박스 라벨 자동 생성
+  - **대규모 합성 데이터셋 자동화 수집**: 고해상도 렌더타깃 이미지, 3D 월드 좌표 투영 기반 정밀 2D YOLO 라벨(.txt) 및 비행/짐벌 메타데이터 CSV 자동 생성
   - **AI 전이 학습 & 추론**: NVIDIA RTX 5070 GPU 가속 기반 YOLOv8 학습 및 실시간 객체 탐지
   - **실시간 지리참조(Georeferencing) 및 전술 매핑**: 핀홀 카메라 역투영 및 공간 클러스터링을 통한 실시간 전술 지도 자동 렌더링 및 항공 정사 모자이크(Orthomosaic) 합성
 
@@ -17,113 +17,89 @@
 - **Language / IDE**: C++ (Visual Studio 2022), C# (.NET 8 / WPF GCS), Python 3.10+
 - **Deep Learning / AI**: PyTorch (CUDA 12.x 가속), Ultralytics YOLOv8, OpenCV
 - **Hardware Acceleration**: NVIDIA GeForce RTX 5070 (12GB VRAM)
-- **Repository Management**: Git (대용량 빌드 캐시/바이너리 제외 최적화 완료, `Content/` 에셋 동기화 관리)
 
-### 1.3. 핵심 설계 원칙 및 책임 분리 (Architecture Principles)
-- **책임의 분리 (Separation of Concerns)**:
-  - **GCS (C# WPF)**: "임무 계획자(Mission Planner)" — 비행 임무 생성, 웨이포인트 목록(`WAYPOINT_LIST`) 전달, 수신 텔레메트리 시각화
-  - **드론 (Unreal Engine C++)**: "물리적 실행자(Flight Controller)" — 경로 추종, 최대 속도/가속도 클램핑, 안전 고도 유지 및 충돌 방어, 도달 반경(Acceptance Radius) 판정
-  - **맵에 액터 배치 (Unreal Engine Python Script)**: `(drone_setup.py, env_setup.py)` — 드론 관련 액터 배치, 맵에 타겟/식생 절차적 배치
-- **무결성 및 안정성**: 단일 진실 공급원(SSOT), 프레임 드랍 없는 논블로킹 UDP 통신, 객체 지향적 단일 조종 대상(`TargetActor`) 제어 구조 확립
-
----
-
-## 2. 세부 개발 내용 및 최근 업데이트 내역
-
-### 2.1. 언리얼 C++ 드론 비행 제어 및 입력 처리 (`UCommLink`)
-
-#### 1) 단발성 키보드 입력 체계 개선 (`ProcessInputKeyboard`)
-- 기존 `IsInputKeyDown()`의 연속 호출로 인한 제어 폭주 문제를 해결하기 위해, `WasInputKeyJustPressed()` 기반으로 전면 리팩터링
-- 키를 1회 누를 때마다 사전에 정의된 정밀 변위(이동 3m, 짐벌 5도, 회전 3도 등)만 정확히 1회 명령(`MOVE`, `GIMBAL`)으로 인코딩하여 송신
-
-#### 2) 정밀 오차 0.00mm 미터(m) 단위 직접 이동 (`MOVE` 패킷)
-- `Normalize()` 및 임의의 `MoveSpeed` 계수를 전면 제거
-- JSON으로 전달된 `forward`, `right`, `up` (미터 단위)에 언리얼 좌표 변환 계수 `100.0f` (1m = 100cm)만 곱해 기체 로컬 벡터에 직접 가산
-- `Yaw`는 거리 단위가 아닌 각도(Degree)이므로 스케일링 없이 순수 회전 각도로 적용
-- **FreeRoam 모드 버그 수정 및 코드 단일화**:
-  - 기존 옵저버 FreeRoam 모드 시 드론이 옵저버 위치로 순간이동하던 버그를 수정
-  - 삼항 연산자를 통해 조종 대상 액터(`TargetActor`) 포인터를 단일화하여 40줄의 중복 코드를 15줄의 견고한 로직으로 압축:
-    ```cpp
-    AActor* TargetActor = (CachedObserverActor && CachedObserverActor->TrackingMode == EObserverTrackingMode::FreeRoam)
-        ? Cast<AActor>(CachedObserverActor)
-        : Cast<AActor>(CachedDronePawn);
-    ```
-
-#### 3) 관찰자 시점 및 캡처 시스템
-- `OBSERVER` 명령 수신 시 `AObserverPawn::SetTrackingMode`와 즉시 연동하여 Chase / Satellite / FreeRoam 시점 실시간 순환 전환
-- `CAPTURE` 명령 수신 시 드론 본체(`ADronePawn::ExecuteCapture`)가 파일명(`DRONE_..._0001.png`)과 디스크 저장을 주도적으로 처리하도록 정석화
+### 1.3. 핵심 설계 원칙 (Architecture Principles)
+- **순수 C++ 항법 엔진 분리 (Engine-Agnostic Navigation Engine)**:
+  - 언리얼 엔진 종속성(`UCLASS`, `UActorComponent`)을 완전히 배제한 **순수 C++ 클래스(`NavBase`, `NavFixedWing`)** 로 항법/물리 엔진 구축
+  - 드론 폰(`ADronePawn`)은 비행 물리 계산을 직접 하지 않고, 매 틱마다 `NavEngine->Step()`을 호출하여 위치/각도만 반영받는 극단적 경량화 달성
+- **단일 창구 입력 체계 (Single Entry-Point Command Flow)**:
+  - 언리얼 내부 키보드 입력이든 C# GCS 네트워크 패킷이든 **100% 동일한 JSON 규격으로 변환되어 `UCommLink::ProcessJsonCommand()` 단일 진입점**만을 통과
+- **실제 항공기 조타면 역학 (Aero Surface Inertia & Auto-Decay)**:
+  - 통신 주기나 패킷 수신 빈도와 무관하게, 드론 내부 필터(`FInterpTo`)와 조타면 자동 중립 복귀(Auto Neutral Decay)를 통해 자연스러운 뱅크 턴(Bank Turn) 비행 구현
+- **절대 해수면 고도(MSL) 표준화**:
+  - 언리얼 월드 절대 원점 기준의 **MSL(Mean Sea Level, Absolute Z)** 을 텔레메트리 및 항법의 단일 표준으로 채택
 
 ---
 
-### 2.2. UDP 통신 프로토콜 규격 및 C# GCS DTO 동기화
+## 2. 핵심 구현 현황
 
-#### 1) 명령 프로토콜 (GCS ➔ Unreal, Port: 9000)
-- **`MOVE` (정밀 이동/회전)**:
-  `{"id":"MOVE", "forward": 5.0, "right": 0.0, "up": 0.0, "yaw": 15.0}`
-- **`GIMBAL` (짐벌 제어)**:
-  `{"id":"GIMBAL", "up": 5.0, "right": 0.0}`
-- **`CAPTURE` (사진 촬영)**:
-  `{"id":"CAPTURE"}`
-- **`OBSERVER` (시점 전환 서클 체인지)**:
-  `{"id":"OBSERVER"}`
-- **`WAYPOINT_LIST` (향후 작업 예정)**:
-  `{"id":"WAYPOINT_LIST", "points":[{"x":10, "y":20, "z":30}, ...]}`
+### 2.1. 순수 C++ 고정익 항법 엔진 (`NavBase.h`, `NavFixedWing.h / .cpp`)
+- **계층형 네이밍 규칙**: `NavBase`, `NavFixedWing` (향후 `NavMulticopter`, `NavVTOL` 확장 구조)
+- **고정익 실속 방지 및 속도 제어**: 최소 속도(10 m/s = 1000 cm/s) ~ 최대 속도(30 m/s = 3000 cm/s), 스로틀 가감속
+- **공기역학적 연동 선회 (Coordinated Bank-Turn)**:
+  - Roll(에일러론) 입력 시 기체 날개를 최대 40도까지 기울이고, 뱅크각에 비례하여 기수(Yaw)가 자연스럽게 호를 그리며 선회하도록 수식 통합:
+    $$\text{TurnRate} = \left(\frac{\text{Roll}}{40^\circ}\right) \times 45^\circ/\text{s} + \text{RudderRate}$$
+- **조타 입력 자체 스무딩 및 자동 중립 감쇠**:
+  - 외부 조작이 중단되면 기체 스스로 조타면을 중립(0.0)으로 서서히 복원하여 수평 순항 상태 유지
 
-#### 2) 텔레메트리 프로토콜 (Unreal ➔ GCS, Port: 9001)
-- 언리얼 엔진에서 10Hz 주기로 브로드캐스트하는 JSON 구조:
+### 2.2. 언리얼 비행체 및 통신 컴포넌트 (`ADronePawn`, `UCommLink`)
+- **`ADronePawn` 경량화**: `TUniquePtr<INavBase> NavEngine`과 `ApplyManualControl()` 단일 브릿지만 유지
+- **`UCommLink` 입력 일원화**: 모든 키보드 입력(WASD, EQ, CZ, 방향키, Space, O)을 JSON 명령(`MOVE`, `GIMBAL`, `CAPTURE`, `OBSERVER`)으로 직렬화하여 처리
+- **MSL 절대 고도 텔레메트리 10Hz 송신**: 센티미터 좌표를 미터 단위 절대 MSL 고도로 변환하여 브로드캐스트
+
+### 2.3. C# WPF GCS 연동 (`MainWindowVM.cs`, `DroneCommands.cs`)
+- **표준 비행 조종 규격(`MoveCommand`)**: `MoveCommand(forward, right, pitch, yaw)`를 `float` 정규화 단위(-1.0f ~ +1.0f)로 통합
+- **스틱 상태 기반 제어**: 키 누름/뗌 이벤트에 따른 조타 및 중립 복귀 처리
+- **텔레메트리 연동**: Roll/Yaw 자세 및 MSL 고도 실시간 모니터링 반영
+
+---
+
+## 3. 통신 프로토콜 규격 (Port: 9000 CMD / 9001 TLM)
+
+### 3.1. 제어 명령 패킷 (GCS / Keyboard ➔ Unreal C++, Port: 9000)
+- **`MOVE` (수동 비행 조타)**:
   ```json
-  {
-    "id": "TELEMETRY",
-    "seq": 1042,
-    "loc_x": 12.5, "loc_y": -4.2, "loc_z": 30.0,
-    "rot_pitch": 0.0, "rot_yaw": 90.0, "rot_roll": 0.0,
-    "gimbal_pitch": -60.0, "gimbal_yaw": 0.0,
-    "speed": 0.0,
-    "mode": "MANUAL",
-    "reached": false
-  }
+  {"id":"MOVE", "forward": 1.0, "right": -1.0, "pitch": 0.0, "yaw": 0.0}
+  ```
+  *(forward: 스로틀 가감속, right: Roll 뱅킹 좌우, pitch: 기수 상하, yaw: 러더 좌우)*
+- **`GIMBAL` (2축 짐벌 각도 제어)**:
+  ```json
+  {"id":"GIMBAL", "up": 5, "right": 0}
+  ```
+- **`CAPTURE` (즉시 렌더타깃 이미지 & YOLO 라벨 저장)**:
+  ```json
+  {"id":"CAPTURE"}
+  ```
+- **`OBSERVER` (관찰자 시점 Chase / TopDown / Free 순환)**:
+  ```json
+  {"id":"OBSERVER"}
   ```
 
-#### 3) C# GCS 완벽 매핑 DTO (`DroneTelemetryPacket.cs`)
-- 언리얼의 개별 필드(`loc_x`, `rot_pitch` 등)와 1:1 매핑되면서, 기존 C# UI 바인딩과의 호환성을 위해 `[JsonIgnore]` 배열 헬퍼(`Loc`, `Rot`, `Gimbal`)를 내장:
-  ```csharp
-  public class DroneTelemetryPacket
-  {
-      [JsonPropertyName("id")] public string Id { get; set; } = "TELEMETRY";
-      [JsonPropertyName("seq")] public long Seq { get; set; }
-      [JsonPropertyName("loc_x")] public double LocX { get; set; }
-      [JsonPropertyName("loc_y")] public double LocY { get; set; }
-      [JsonPropertyName("loc_z")] public double LocZ { get; set; }
-      [JsonPropertyName("rot_pitch")] public double RotPitch { get; set; }
-      [JsonPropertyName("rot_yaw")] public double RotYaw { get; set; }
-      [JsonPropertyName("rot_roll")] public double RotRoll { get; set; }
-      [JsonPropertyName("gimbal_pitch")] public double GimbalPitch { get; set; }
-      [JsonPropertyName("gimbal_yaw")] public double GimbalYaw { get; set; }
-      [JsonPropertyName("speed")] public double Speed { get; set; }
-      [JsonPropertyName("mode")] public string Mode { get; set; } = "MANUAL";
-      [JsonPropertyName("reached")] public bool Reached { get; set; }
-
-      [JsonIgnore] public double[] Loc => new double[] { LocX, LocY, LocZ };
-      [JsonIgnore] public double[] Rot => new double[] { RotPitch, RotYaw, RotRoll };
-      [JsonIgnore] public double[] Gimbal => new double[] { GimbalPitch, GimbalYaw };
-  }
-  ```
+### 3.2. 텔레메트리 패킷 (Unreal C++ ➔ GCS, Port: 9001)
+```json
+{
+  "id": "TELEMETRY",
+  "seq": 1520,
+  "loc_x": 12.5, "loc_y": -4.2, "loc_z": 100.0,
+  "rot_pitch": 2.1, "rot_yaw": 85.4, "rot_roll": -24.8,
+  "gimbal_pitch": -90.0, "gimbal_yaw": 0.0,
+  "speed": 15.0,
+  "mode": "MANUAL"
+}
+```
+*(loc_z는 순수 MSL 절대 고도 미터 단위)*
 
 ---
 
-### 2.3. 저장소(Git) 및 디렉터리 최적화 내역
-- **37GB 대용량 원인 규명 및 정리**:
-  - `Saved/` (19.77GB 크래시/덤프/캡처), `Python/` (10.33GB venv/가중치), `.vs/` (3.58GB), `Intermediate/` (2.58GB) 식별 완료
-  - `.gitignore` 최적화: 불필요한 임시/빌드 폴더는 영구 제외하고, 프로젝트 핵심 소스코드 및 필수 맵 에셋(`Content/`, 약 170MB)만 안정적으로 커밋/푸시되도록 설정 완료
+## 4. 새로운 세션에서 진행할 핵심 개발 과제 (Next Steps)
 
----
-
-## 3. 새로운 세션에서 진행할 핵심 개발 과제 (Next Steps)
-1. **자율 웨이포인트(Waypoint) 비행 엔진 구현 (Unreal C++)**:
-   - GCS로부터 수신된 웨이포인트 큐(Queue) 순차 비행 로직 구현
-   - 물리적 한계 방어: 최대 비행 속도 클램핑, 급격한 각속도 제한, 지형 충돌 방지 최소 안전 고도 보정
-   - 도달 판정(Acceptance Radius, 예: 1.5m) 감지 시 정지 ➔ 사진 촬영 트리거 ➔ 다음 웨이포인트 가속 전환 및 `reached: true` 텔레메트리 피드백
-2. **C# WPF GCS 경로 계획 UI 연동**:
-   - 2D 지도 상에서 마우스 클릭으로 웨이포인트 지정 및 고도 설정 인터페이스 구현
-   - 전송 버튼 클릭 시 `WAYPOINT_LIST` JSON 생성 및 UDP 9000번 포트 송신
-
+1. **순수 C++ 고정익 자율 항법 복구 및 통합 (`NavFixedWing`)**:
+   - `INavBase`에 `StartMission(const TArray<FWaypointItemData>& Waypoints)` API 표준 추가
+   - 3m 반경 내 도달 시 즉시 다음 웨이포인트로 전환하는 논스톱(Non-stop) 선회 항법 연동
+   - 마지막 웨이포인트 완주 후 반경 40m 원형 선회(Loiter Mode, Roll 25도 고정 뱅크) 모드 구현
+2. **자동 촬영(Periodic Capture) 및 YOLO 데이터셋 파이프라인 연계**:
+   - 자율 비행 중 설정된 시간 간격(예: 2.5초)으로 자동 `ExecuteCapture()` 트리거
+   - 생성된 이미지와 바운딩 박스 라벨의 실시간 폴더 감시(`ImageWatcherService`) 및 GCS 수신
+3. **C# WPF GCS 전술 지도(Tactical Map) 위 웨이포인트 가시화**:
+   - GCS 화면의 전술 지도 캔버스 위에 드론의 실시간 위치/헤딩 아이콘 렌더링
+   - 직사각형 수색 격자(Search Grid) 웨이포인트 전송 UI 및 비행 경로 궤적 시각화

@@ -9,16 +9,16 @@ namespace DroneMapGCS
 {
   
 
-    public class DroneCommandService : IDisposable
+    public class CommCmdService : IDisposable
     {
         private readonly IPEndPoint _remoteEndPoint;
 
-        public DroneCommandService(string targetIp = "127.0.0.1", int targetPort = 9000)
+        public CommCmdService(string targetIp = "127.0.0.1", int targetPort = 9000)
         {
             _remoteEndPoint = new IPEndPoint(IPAddress.Parse(targetIp), targetPort);
         }
 
-        public void SendJsonCommand(DroneCommandPacket packet)
+        public void SendJsonCommand(CmdPacket packet)
         {
             try
             {

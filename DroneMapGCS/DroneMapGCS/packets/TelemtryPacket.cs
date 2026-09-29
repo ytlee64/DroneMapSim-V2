@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace DroneMapGCS
 {
-    public class DroneTelemetryPacket
+    public class TelemtryPacket
     {
         [JsonPropertyName("id")]
         public string Id { get; set; } = "TELEMETRY";

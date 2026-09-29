@@ -8,11 +8,11 @@ using System.Threading.Tasks;
 
 namespace DroneMapGCS
 {
-    public class TelemetryReceiverService : IDisposable
+    public class CommTelemetryService : IDisposable
     {
         private UdpClient? _udpClient;
         private CancellationTokenSource? _cts;
-        public event Action<DroneTelemetryPacket>? TelemetryReceived;
+        public event Action<TelemtryPacket>? TelemetryReceived;
 
         public void Start(int port = 9001)
         {
@@ -42,7 +42,7 @@ namespace DroneMapGCS
                     var result = await _udpClient.ReceiveAsync(token);
                     string json = Encoding.UTF8.GetString(result.Buffer);
 
-                    var packet = JsonSerializer.Deserialize<DroneTelemetryPacket>(json);
+                    var packet = JsonSerializer.Deserialize<TelemtryPacket>(json);
                     if (packet != null)
                     {
                         TelemetryReceived?.Invoke(packet);

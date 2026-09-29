@@ -4,13 +4,12 @@
 #include "TargetGenActor.h"
 #include "ObserverPawn.h"
 #include "ScanProjection.h"
+#include "NavFixedWing.h" // 순수 C++ 고정익 항법 엔진
 
 #include "ImageUtils.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 #include "Components/CapsuleComponent.h"
-#include "Components/SphereComponent.h"
-#include "Components/ArrowComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/SceneCaptureComponent2D.h"
 #include "Engine/TextureRenderTarget2D.h"
@@ -56,21 +55,10 @@ ADronePawn::ADronePawn()
     CollisionComp = CreateDefaultSubobject<UCapsuleComponent>(TEXT("CollisionComponent"));
     RootComponent = CollisionComp;
 
-    // 2. 드론 시각적 본체 및 방향 표시
+    // 2. 드론 시각적 본체
     DroneMeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("DroneMeshComponent"));
     DroneMeshComp->SetupAttachment(RootComponent);
-    // 드론 메쉬 자체 충돌은 끄고, 루트인 CollisionComp가 충돌을 전담하도록 설정
     DroneMeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
-    //DroneMeshComp = CreateDefaultSubobject<USphereComponent>(TEXT("DroneMeshComponent"));
-    //DroneMeshComp->SetupAttachment(RootComponent);
-    //DroneMeshComp->SetSphereRadius(50.0f);
-    //DroneMeshComp->SetHiddenInGame(false);
-
-    //DirectionConeComp = CreateDefaultSubobject<UArrowComponent>(TEXT("DirectionConeComponent"));
-    //DirectionConeComp->SetupAttachment(DroneMeshComp);
-    //DirectionConeComp->ArrowSize = 2.0f;
-    //DirectionConeComp->SetHiddenInGame(false);
 
     // 3. 2축 짐벌 기구학 컴포넌트
     GimbalOuterAxisComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("GimbalOuterAxisComponent"));
@@ -86,20 +74,20 @@ ADronePawn::ADronePawn()
 
     CurrentGimbalMode = EGimbalMode::YawOuter_PitchInner;
 
-    // 5. 고정익 순항 비행 기본값 (15 m/s = 1500 cm/s)
-    NavFlySpeed = 1500.0f;
-
-    // 6. 명령 수신 컴포넌트 및 짐벌 연결
+    // 5. 명령 수신 컴포넌트 및 짐벌 연결
     CommLink = CreateDefaultSubobject<UCommLink>(TEXT("CommLink"));
     CommLink->GimbalComponentYaw = GimbalOuterAxisComp;
     CommLink->GimbalComponentPitch = GimbalInnerAxisComp;
+
+    // 6. 순수 C++ 고정익 항법 엔진 장착!
+    NavEngine = MakeUnique<FNavFixedWing>();
 }
 
 void ADronePawn::BeginPlay()
 {
     Super::BeginPlay();
 
-    // 1. 타겟 관리자(TargetGenActor)에게 30m 고도의 지형 스폰 좌표를 질의하여 안착
+    // 1. 타겟 관리자에게 30m 고도의 지형 스폰 좌표 질의 후 안착
     ATargetGenActor* TargetGen = Cast<ATargetGenActor>(UGameplayStatics::GetActorOfClass(GetWorld(), ATargetGenActor::StaticClass()));
     if (TargetGen)
     {
@@ -108,7 +96,7 @@ void ADronePawn::BeginPlay()
         SetActorLocation(SpawnLoc, false, nullptr, ETeleportType::TeleportPhysics);
     }
 
-    // 2. 드론 카메라에서 기체 본체 가리기
+    // 2. 드론 카메라에서 본체 가리기
     if (DroneCameraComp)
     {
         DroneCameraComp->HiddenActors.Add(this);
@@ -131,148 +119,31 @@ void ADronePawn::EndPlay(const EEndPlayReason::Type EndPlayReason)
 }
 
 // -----------------------------------------------------------------------------
-// [비행 물리 보간 Tick: 고정익 전용 단일화]
+// [비행 물리 보간 Tick: NavEngine에 위임]
 // -----------------------------------------------------------------------------
 void ADronePawn::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
-    // 고정익 자율 비행이 활성화되어 있지 않으면 리턴
-    if (!bFixedWingFlightActive) return;
-
-    FVector CurrentLoc = GetActorLocation();
-
-    // [A. 미션 완료 후 Loiter 40m 선회 비행 모드]
-    if (bLoiteringMode)
+    if (NavEngine)
     {
-        // 선회 각속도 = 선속도 / 반지름
-        float AngularSpeedRad = (NavFlySpeed / LoiterRadius);
-        LoiterCurrentAngleRad += AngularSpeedRad * DeltaTime;
-
-        FVector TargetOrbitLoc = LoiterCenterLocation + FVector(
-            FMath::Cos(LoiterCurrentAngleRad) * LoiterRadius,
-            FMath::Sin(LoiterCurrentAngleRad) * LoiterRadius,
-            0.0f // 고도 유지
-        );
-
-        FVector FlightDir = (TargetOrbitLoc - CurrentLoc);
-        FlightDir.Normalize();
-
-        SetActorLocation(CurrentLoc + FlightDir * NavFlySpeed * DeltaTime, true);
-
-        // 선회 비행 시 접선 방향 회전 및 날개 뱅킹(Roll 25도)
-        FRotator TargetRot = FlightDir.Rotation();
-        TargetRot.Roll = 25.0f;
-        SetActorRotation(FMath::RInterpTo(GetActorRotation(), TargetRot, DeltaTime, 4.0f));
-    }
-    // [B. 직사각형 순차 웨이포인트 비행 모드]
-    else
-    {
-        FVector Direction = (NavTargetLocation - CurrentLoc);
-        float Distance = Direction.Size();
-
-        // 3m 이내 도달 시 정지하지 않고 즉시 다음 웨이포인트로 전환
-        if (Distance <= 300.0f)
-        {
-            AdvanceToNextWaypoint();
-        }
-        else
-        {
-            Direction.Normalize();
-            SetActorLocation(CurrentLoc + Direction * NavFlySpeed * DeltaTime, true);
-
-            // 비행 방향 회전 및 뱅킹 각도 연동
-            FRotator TargetRot = Direction.Rotation();
-            TargetRot.Pitch = FMath::Clamp(TargetRot.Pitch, -20.0f, 20.0f);
-
-            float DeltaYaw = FMath::FindDeltaAngleDegrees(GetActorRotation().Yaw, TargetRot.Yaw);
-            TargetRot.Roll = FMath::Clamp(DeltaYaw * 0.8f, -30.0f, 30.0f);
-
-            SetActorRotation(FMath::RInterpTo(GetActorRotation(), TargetRot, DeltaTime, 3.5f));
-        }
+        FVector NextLoc;
+        FRotator NextRot;
+        NavEngine->Step(GetActorLocation(), GetActorRotation(), DeltaTime, NextLoc, NextRot);
+        SetActorLocation(NextLoc, true);
+        SetActorRotation(NextRot);
     }
 }
 
 // -----------------------------------------------------------------------------
-// [고정익 웨이포인트 수신 및 비행 개시]
+// [수동 조종 인터페이스: CommLink에서 호출]
 // -----------------------------------------------------------------------------
-void ADronePawn::SetFixedWingWaypoints(
-    const TArray<FWaypointItemData>& Waypoints,
-    float LoiterRadius_cm,
-    bool bPeriodicCapture,
-    float CaptureIntervalSec
-)
+void ADronePawn::ApplyManualControl(float Throttle, float Roll, float Pitch, float Yaw)
 {
-    // 기존 타이머 해제
-    GetWorldTimerManager().ClearTimer(PeriodicCaptureTimerHandle);
-
-    if (Waypoints.Num() == 0)
+    if (NavEngine)
     {
-        bFixedWingFlightActive = false;
-        bLoiteringMode = false;
-        UE_LOG(LogTemp, Warning, TEXT("[DronePawn] Received empty waypoints list!"));
-        return;
+        NavEngine->SetManualInput(Throttle, Roll, Pitch, Yaw);
     }
-
-    FixedWingWaypoints = Waypoints;
-    CurrentWaypointIndex = 0;
-    LoiterRadius = (LoiterRadius_cm > 500.0f) ? LoiterRadius_cm : 4000.0f; // 40m 안전값
-    bLoiteringMode = false;
-    bFixedWingFlightActive = true;
-
-    // 첫 번째 웨이포인트 설정
-    const FWaypointItemData& FirstWp = FixedWingWaypoints[0];
-    NavTargetLocation = FirstWp.Location;
-    NavFlySpeed = (FirstWp.Speed_cm_s > 500.0f) ? FirstWp.Speed_cm_s : 1500.0f; // 기본 15 m/s
-
-    UE_LOG(LogTemp, Log, TEXT("[DronePawn] Fixed-Wing Mission Started: %d points, Loiter Radius: %.1f cm"),
-        FixedWingWaypoints.Num(), LoiterRadius);
-
-    // 주기적 촬영 타이머 등록
-    if (bPeriodicCapture && CaptureIntervalSec > 0.1f)
-    {
-        GetWorldTimerManager().SetTimer(
-            PeriodicCaptureTimerHandle,
-            this,
-            &ADronePawn::ExecuteCapture,
-            CaptureIntervalSec,
-            true
-        );
-
-        UE_LOG(LogTemp, Log, TEXT("[DronePawn] Periodic capture timer started (Interval: %.2f sec)"), CaptureIntervalSec);
-    }
-}
-
-void ADronePawn::AdvanceToNextWaypoint()
-{
-    CurrentWaypointIndex++;
-
-    // 사각형 4개 웨이포인트를 모두 완주한 경우 -> 자율비행 종료 및 매뉴얼 모드 복귀!
-    if (CurrentWaypointIndex >= FixedWingWaypoints.Num())
-    {
-        // 1. 자율 비행 상태 비활성화
-        bFixedWingFlightActive = false;
-        bLoiteringMode = false;
-
-        // 2. 미션 완료되었으므로 주기적 사진 촬영 타이머 정지
-        GetWorldTimerManager().ClearTimer(PeriodicCaptureTimerHandle);
-
-        // 3. 기체 자세 수평 안정화 (Roll 뱅킹 각도 0도로 복원)
-        FRotator LevelRot = GetActorRotation();
-        LevelRot.Roll = 0.0f;
-        SetActorRotation(LevelRot);
-
-        UE_LOG(LogTemp, Log, TEXT("[DronePawn] Rectangle Mission Complete! Restored to MANUAL CONTROL mode."));
-        return;
-    }
-
-    // 다음 웨이포인트로 계속 진행
-    const FWaypointItemData& NextWp = FixedWingWaypoints[CurrentWaypointIndex];
-    NavTargetLocation = NextWp.Location;
-    NavFlySpeed = (NextWp.Speed_cm_s > 500.0f) ? NextWp.Speed_cm_s : 1500.0f;
-
-    UE_LOG(LogTemp, Log, TEXT("[DronePawn] Heading to WP #%d: (%.1f, %.1f, %.1f)"),
-        CurrentWaypointIndex + 1, NavTargetLocation.X, NavTargetLocation.Y, NavTargetLocation.Z);
 }
 
 // -----------------------------------------------------------------------------

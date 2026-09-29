@@ -30,7 +30,7 @@ namespace DroneMapGCS
     // =========================================================================
     // 3. 웨이포인트 리스트 전송 명령 (고정익 직사각형 비행 & 선회반경 40m)
     // =========================================================================
-    public class WaypointListCommand : DroneCommandPacket
+    public class WaypointListCommand : CmdPacket
     {
         public WaypointListCommand() : base("WAYPOINT_LIST") { }
 
