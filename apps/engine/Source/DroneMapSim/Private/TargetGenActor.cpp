@@ -33,9 +33,7 @@ void ATargetGenActor::BeginPlay()
 	CalculateLandscapeBounds();
 }
 
-// -----------------------------------------------------------------------------
-// [���� ����]: ������ ��� Landscape/Proxy�� �����Ͽ� ���� BoundingBox�� ���
-// -----------------------------------------------------------------------------
+ 
 FBox ATargetGenActor::GetTotalLandscapeBounds(TArray<AActor*>& OutLandscapeActors)
 {
 	OutLandscapeActors.Empty();
@@ -85,9 +83,7 @@ void ATargetGenActor::CalculateLandscapeBounds()
 	}
 }
 
-// -----------------------------------------------------------------------------
-// [���� ��ǥ ��ȯ]: ���彺������ �߽��� ������ ����Ʈ���̽��Ͽ� ���� ���� ����
-// -----------------------------------------------------------------------------
+ 
 FVector ATargetGenActor::GetTerrainSpawnLocation(float DesiredAlt)
 {
 	TArray<AActor*> LandscapePieces;
@@ -110,7 +106,6 @@ FVector ATargetGenActor::GetTerrainSpawnLocation(float DesiredAlt)
 		return FVector(Center.X, Center.Y, TotalBox.Max.Z + DesiredAlt);
 	}
 
-	// ���彺�������� ���� ��� �⺻��
 	return FVector(0.0f, 0.0f, DesiredAlt);
 }
 
@@ -178,7 +173,7 @@ void ATargetGenActor::SetupHISMComponents()
 	}
 }
 
-void ATargetGenActor::GenerateEnvironment()
+void ATargetGenActor::GenerateTarget()
 {
 	UE_LOG(LogTemp, Log, TEXT("=================================================="));
 	UE_LOG(LogTemp, Log, TEXT("[EnvGen] STARTING GENERATION"));
@@ -197,7 +192,6 @@ void ATargetGenActor::GenerateEnvironment()
 		return;
 	}
 
-	// 1. ���� �Լ��� ����Ͽ� ���� �ٿ�� �ڽ� ȹ��
 	TArray<AActor*> AllLandscapeActors;
 	FBox TotalLandscapeBounds = GetTotalLandscapeBounds(AllLandscapeActors);
 
@@ -313,7 +307,7 @@ void ATargetGenActor::GenerateEnvironment()
 				}
 			}
 
-			const FEnvElementConfig& SelectedConfig = EnvElements[SelectedIndex];
+			const FTargetConfig& SelectedConfig = EnvElements[SelectedIndex];
 			if (SlopeAngle > SelectedConfig.MaxSlopeAngle)
 			{
 				FailSlopeAngle++;
@@ -350,7 +344,7 @@ void ATargetGenActor::GenerateEnvironment()
 
 			if (SelectedConfig.bIsTarget)
 			{
-				FEnvTargetRecord Record;
+				FTargetRecord Record;
 				Record.ClassId = SelectedConfig.TargetClassId;
 				Record.ClassName = SelectedConfig.ElementName.IsEmpty() ? SelectedConfig.ElementMesh->GetName() : SelectedConfig.ElementName;
 				Record.WorldLocation = Location;
@@ -363,7 +357,7 @@ void ATargetGenActor::GenerateEnvironment()
 	}
 
 	UE_LOG(LogTemp, Log, TEXT("=================================================="));
-	UE_LOG(LogTemp, Log, TEXT("[EnvGen] DIAGNOSTIC REPORT"));
+	UE_LOG(LogTemp, Log, TEXT("[TargetGen] DIAGNOSTIC REPORT"));
 	UE_LOG(LogTemp, Log, TEXT("  - Total Grid Points Checked : %d"), TotalGridPoints);
 	UE_LOG(LogTemp, Log, TEXT("  - Skipped (Probability Pass): %d"), FailSpawnProbability);
 	UE_LOG(LogTemp, Log, TEXT("  - Total Spawned Instances   : %d"), TotalSpawned);
@@ -386,7 +380,7 @@ bool ATargetGenActor::ExportTargetsToJson(const FString& FileName)
 	FString JsonContent = TEXT("[\n");
 	for (int32 i = 0; i < SpawnedTargets.Num(); ++i)
 	{
-		const FEnvTargetRecord& Target = SpawnedTargets[i];
+		const FTargetRecord& Target = SpawnedTargets[i];
 		JsonContent += FString::Printf(
 			TEXT("  {\n    \"class_id\": %d,\n    \"class_name\": \"%s\",\n    \"location\": [%.2f, %.2f, %.2f],\n    \"rotation\": [%.2f, %.2f, %.2f],\n    \"extent\": [%.2f, %.2f, %.2f]\n  }%s\n"),
 			Target.ClassId,

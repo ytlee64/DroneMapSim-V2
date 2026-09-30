@@ -39,22 +39,16 @@ public:
     // -------------------------------------------------------------------------
     // 1. 수동 조종 API (CommLink 및 GCS 패킷 수신 시 호출)
     // -------------------------------------------------------------------------
-    UFUNCTION(BlueprintCallable, Category = "Drone|Flight")
     void ApplyManualControl(float Throttle, float Roll, float Pitch, float Yaw);
 
     // -------------------------------------------------------------------------
     // 2. 짐벌 제어 API
     // -------------------------------------------------------------------------
-    UFUNCTION(BlueprintCallable, Category = "Drone|Gimbal")
-    void SetGimbalOrientation(float Pitch, float Yaw);
-
-    UFUNCTION(BlueprintCallable, Category = "Drone|Gimbal")
     void ToggleGimbalMode();
 
     // -------------------------------------------------------------------------
     // 3. 센서 촬영 및 AI 라벨링 데이터셋 자동 생성
     // -------------------------------------------------------------------------
-    UFUNCTION(BlueprintCallable, Category = "Drone|Sensor")
     void ExecuteCapture();
 
     // -------------------------------------------------------------------------
@@ -86,14 +80,12 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Drone|Components")
     TObjectPtr<USceneCaptureComponent2D> DroneCameraComp;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Drone|Components")
     TObjectPtr<UCommLink> CommLink;
 
     // 촬영 렌더타깃 에셋
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Drone|Camera")
     TObjectPtr<UTextureRenderTarget2D> DroneRenderTargetAsset;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Drone|Gimbal")
     EGimbalMode CurrentGimbalMode = EGimbalMode::YawOuter_PitchInner;
 
 protected:

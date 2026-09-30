@@ -17,6 +17,9 @@ AObserverPawn::AObserverPawn()
     CameraComp->SetupAttachment(RootComponent);
     CameraComp->SetFieldOfView(90.0f);
     CameraComp->bUsePawnControlRotation = false; // 카메라가 액터 회전만 따름
+
+    // 옵저버는 순수 관전용, 물리적 충돌이 전혀 없어야 함 (드론/지형과 부딪혀 못 따라가는 현상 방지)
+    SetActorEnableCollision(false);
 }
 
 void AObserverPawn::BeginPlay()

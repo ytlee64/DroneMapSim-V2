@@ -21,6 +21,7 @@ public:
     // 2. 매 틱마다 비행 물리 연산 (현재 위치/자세 -> 다음 위치/자세 계산)
     virtual void Step(const FVector& CurrentLoc, const FRotator& CurrentRot, float DeltaTime,
         FVector& OutNextLoc, FRotator& OutNextRot) override;
+	virtual float GetCurrentSpeed() { return CurrentSpeed; }
 
 private:
     // 비행 속도 파라미터 (단위: cm/s)
@@ -33,4 +34,15 @@ private:
     float InputRoll = 0.0f;
     float InputPitch = 0.0f;
     float InputYaw = 0.0f;
+
+    // -------------------------------------------------------------
+    // 자율주행 진입 시점의 위치를 사각 궤적의 중심 기준으로 사용
+    // -------------------------------------------------------------
+    bool bAutoNavPatternInitialized = false;
+    FVector AutoNavPatternCenter = FVector::ZeroVector;
+
+
+    void UpdateAutonomousGuidance(const FVector& CurrentLoc, const FRotator& CurrentRot, float DeltaTime,
+        float& OutRoll, float& OutPitch, float& OutThrottle);
+    
 };

@@ -118,23 +118,7 @@ void ADronePawn::ApplyManualControl(float Throttle, float Roll, float Pitch, flo
         NavEngine->SetManualInput(Throttle, Roll, Pitch, Yaw);
     }
 }
-
-// -----------------------------------------------------------------------------
-// [짐벌 조종 인터페이스]
-// -----------------------------------------------------------------------------
-void ADronePawn::SetGimbalOrientation(float Pitch, float Yaw)
-{
-    if (CurrentGimbalMode == EGimbalMode::YawOuter_PitchInner)
-    {
-        GimbalOuterAxisComp->SetRelativeRotation(FRotator(0.0f, Yaw, 0.0f));
-        GimbalInnerAxisComp->SetRelativeRotation(FRotator(Pitch, 0.0f, 0.0f));
-    }
-    else
-    {
-        GimbalOuterAxisComp->SetRelativeRotation(FRotator(Pitch, 0.0f, 0.0f));
-        GimbalInnerAxisComp->SetRelativeRotation(FRotator(0.0f, Yaw, 0.0f));
-    }
-}
+ 
 
 void ADronePawn::ToggleGimbalMode()
 {
@@ -202,8 +186,8 @@ void ADronePawn::ExecuteCapture()
     ATargetGenActor* TargetGen = Cast<ATargetGenActor>(UGameplayStatics::GetActorOfClass(GetWorld(), ATargetGenActor::StaticClass()));
     if (TargetGen)
     {
-        const TArray<FEnvTargetRecord>& TargetList = TargetGen->GetSpawnedTargets();
-        for (const FEnvTargetRecord& Target : TargetList)
+        const TArray<FTargetRecord>& TargetList = TargetGen->GetSpawnedTargets();
+        for (const FTargetRecord& Target : TargetList)
         {
             FTransform TargetTransform(Target.WorldRotation, Target.WorldLocation);
             FVector Extent = Target.WorldExtent;

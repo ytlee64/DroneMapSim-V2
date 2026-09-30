@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net.Sockets;
 using System.Text;
@@ -15,8 +16,8 @@ namespace DroneMapGCS
     public partial class MainWindowVM : ObservableObject
     {
         // 10km x 10km 영역 (m)
-        public const double AreaWidthMeters = 5000.0;
-        public const double AreaHeightMeters = 5000.0;
+        public const double AreaWidthMeters = 2000.0;
+        public const double AreaHeightMeters = 2000.0;
 
         [ObservableProperty]
         private float _droneX;
@@ -82,6 +83,9 @@ namespace DroneMapGCS
         private double _centerX = 0.0;
         private double _centerY = 0.0;
 
+        // 화면 크기 변경에 영향을 받지 않도록 궤적을 월드(미터) 좌표로 보관
+        private readonly List<Point> _trajectoryWorldPoints = new List<Point>();
+
         public void UpdateCanvasGeometry(double width, double height)
         {
             if (width <= 50 || height <= 50) return;
@@ -103,6 +107,41 @@ namespace DroneMapGCS
 
             // 사각형 웨이포인트 가이드라인 다시 계산
             //RebuildWaypointGuide();
+
+            // 스케일/중심이 바뀌었으므로 기존 궤적을 새 스케일로 다시 그림
+            RebuildTrajectoryGeometry();
+        }
+
+        private Point ToScreenPoint(Point worldPoint)
+        {
+            double screenX = _centerX + (worldPoint.Y * _meterScale);
+            double screenY = _centerY - (worldPoint.X * _meterScale);
+            return new Point(screenX, screenY);
+        }
+
+        private void RebuildTrajectoryGeometry()
+        {
+            TrajectoryGeometry.Figures.Clear();
+            _currentFigure = null;
+
+            if (_trajectoryWorldPoints.Count == 0)
+            {
+                return;
+            }
+
+            _currentFigure = new PathFigure
+            {
+                StartPoint = ToScreenPoint(_trajectoryWorldPoints[0]),
+                IsClosed = false,
+                IsFilled = false
+            };
+
+            for (int i = 1; i < _trajectoryWorldPoints.Count; i++)
+            {
+                _currentFigure.Segments.Add(new LineSegment(ToScreenPoint(_trajectoryWorldPoints[i]), true));
+            }
+
+            TrajectoryGeometry.Figures.Add(_currentFigure);
         }
 
         public void UpdateTelemetryMap(float locX_m, float locY_m, float locZ_m, float yaw_deg)
@@ -133,6 +172,13 @@ namespace DroneMapGCS
             HeadingY2 = screenY + Math.Sin(rad) * 22.0;
 
             Point newPt = new Point(screenX, screenY);
+
+            // 월드(미터) 좌표로 저장해두어 화면 크기 변경 시 재계산 가능하도록 함
+            _trajectoryWorldPoints.Add(new Point(locX_m, locY_m));
+            if (_trajectoryWorldPoints.Count > 3000)
+            {
+                _trajectoryWorldPoints.RemoveAt(0);
+            }
 
             if (_isFirstPoint || _currentFigure == null)
             {
@@ -165,6 +211,7 @@ namespace DroneMapGCS
             TrajectoryGeometry.Figures.Clear();
             _currentFigure = null;
             _isFirstPoint = true;
+            _trajectoryWorldPoints.Clear();
         }
     }
 }

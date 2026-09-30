@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Globalization;
 using System.IO;
 using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
 namespace DroneMapGCS
@@ -111,8 +114,84 @@ namespace DroneMapGCS
 
             if (bitmap != null)
             {
+                bitmap = DrawYoloBoundingBoxes(bitmap, filePath);
                 ImageCaptured?.Invoke(bitmap, filePath, fileSizeBytes);
             }
+        }
+
+        /// <summary>
+        /// 이미지와 동일한 이름의 YOLO 라벨(.txt) 파일을 읽어
+        /// 정규화된 바운딩 박스를 초록색 사각형으로 그려 새 비트맵을 반환합니다.
+        /// (라벨 파일이 없으면 원본 비트맵을 그대로 반환)
+        /// </summary>
+        private static BitmapImage DrawYoloBoundingBoxes(BitmapImage source, string imageFilePath)
+        {
+            string labelFilePath = Path.ChangeExtension(imageFilePath, ".txt");
+            if (!File.Exists(labelFilePath))
+            {
+                return source;
+            }
+
+            int pixelWidth = source.PixelWidth;
+            int pixelHeight = source.PixelHeight;
+            if (pixelWidth <= 0 || pixelHeight <= 0)
+            {
+                return source;
+            }
+
+            var drawingVisual = new DrawingVisual();
+            using (DrawingContext dc = drawingVisual.RenderOpen())
+            {
+                dc.DrawImage(source, new Rect(0, 0, pixelWidth, pixelHeight));
+
+                var pen = new Pen(Brushes.LimeGreen, 2.0);
+                pen.Freeze();
+
+                foreach (string line in File.ReadAllLines(labelFilePath))
+                {
+                    if (string.IsNullOrWhiteSpace(line)) continue;
+
+                    string[] parts = line.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                    // YOLO 포맷: class_id center_x center_y width height (모두 0~1 정규화 값)
+                    if (parts.Length < 5) continue;
+
+                    if (!double.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out double centerXNorm) ||
+                        !double.TryParse(parts[2], NumberStyles.Float, CultureInfo.InvariantCulture, out double centerYNorm) ||
+                        !double.TryParse(parts[3], NumberStyles.Float, CultureInfo.InvariantCulture, out double widthNorm) ||
+                        !double.TryParse(parts[4], NumberStyles.Float, CultureInfo.InvariantCulture, out double heightNorm))
+                    {
+                        continue;
+                    }
+
+                    double boxWidth = widthNorm * pixelWidth;
+                    double boxHeight = heightNorm * pixelHeight;
+                    double boxLeft = (centerXNorm * pixelWidth) - (boxWidth * 0.5);
+                    double boxTop = (centerYNorm * pixelHeight) - (boxHeight * 0.5);
+
+                    dc.DrawRectangle(null, pen, new Rect(boxLeft, boxTop, boxWidth, boxHeight));
+                }
+            }
+
+            var renderTarget = new RenderTargetBitmap(pixelWidth, pixelHeight, source.DpiX, source.DpiY, PixelFormats.Pbgra32);
+            renderTarget.Render(drawingVisual);
+            renderTarget.Freeze();
+
+            var result = new BitmapImage();
+            using (var ms = new MemoryStream())
+            {
+                var encoder = new PngBitmapEncoder();
+                encoder.Frames.Add(BitmapFrame.Create(renderTarget));
+                encoder.Save(ms);
+                ms.Position = 0;
+
+                result.BeginInit();
+                result.CacheOption = BitmapCacheOption.OnLoad;
+                result.StreamSource = ms;
+                result.EndInit();
+                result.Freeze();
+            }
+
+            return result;
         }
 
         public void Dispose()

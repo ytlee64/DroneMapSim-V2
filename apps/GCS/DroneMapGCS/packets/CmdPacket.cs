@@ -100,4 +100,12 @@ namespace DroneMapGCS
         [JsonPropertyName("yaw")]
         public float Yaw { get; set; } = 0.0f;
     }
+
+    // =========================================================================
+    // 6. ⭐️ 자동 비행 조종 명령 
+    // =========================================================================
+    public class AutoNavCommand : CmdPacket
+    {
+        public AutoNavCommand() : base("AUTONAV") { }
+    }
 }

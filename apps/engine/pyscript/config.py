@@ -34,6 +34,8 @@ ENV_GEN_PARAMS = {
     "GridSpacing": 1200.0,          # 격자 기본 간격 (cm)
     "PositionJitter": 450.0,        # 위치 무작위 지터 (cm)
     "AlignToSurfaceNormal": 0.0,    # 지형 법선 정렬 (0.0 = 수직 기립, 1.0 = 지형 밀착)
+    "EnableWaterExclusion": True,   # WaterBody 영역 위 스폰 제거
+    "WaterXYMarginCm": 200.0,       # 워터 경계 바깥 여유(양수=더 넓게 제외)
 }
 
 

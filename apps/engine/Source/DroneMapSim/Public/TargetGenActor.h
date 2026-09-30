@@ -13,7 +13,7 @@ class UHierarchicalInstancedStaticMeshComponent;
 // 지형 생성 요소 설정 구조체
 // =============================================================================
 USTRUCT(BlueprintType)
-struct FEnvElementConfig
+struct FTargetConfig
 {
 	GENERATED_BODY()
 
@@ -43,7 +43,7 @@ struct FEnvElementConfig
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dataset")
 	int32 TargetClassId;
 
-	FEnvElementConfig()
+	FTargetConfig()
 		: ElementName(TEXT("Element"))
 		, ElementMesh(nullptr)
 		, SpawnWeight(1.0f)
@@ -59,7 +59,7 @@ struct FEnvElementConfig
 // 데이터셋 정답(Ground Truth) 기록 구조체
 // =============================================================================
 USTRUCT(BlueprintType)
-struct FEnvTargetRecord
+struct FTargetRecord
 {
 	GENERATED_BODY()
 
@@ -78,7 +78,7 @@ struct FEnvTargetRecord
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Dataset")
 	FVector WorldExtent;
 
-	FEnvTargetRecord()
+	FTargetRecord()
 		: ClassId(0)
 		, ClassName(TEXT(""))
 		, WorldLocation(FVector::ZeroVector)
@@ -120,13 +120,13 @@ public:
 	// -------------------------------------------------------------------------
 	// 2. 타겟 생성 및 관리 에디터 버튼 (CallInEditor)
 	// -------------------------------------------------------------------------
-	UFUNCTION(BlueprintCallable, CallInEditor, Category = "EnvGen")
-	void GenerateEnvironment();
+	UFUNCTION(BlueprintCallable, CallInEditor, Category = "TargetGen")
+	void GenerateTarget();
 
-	UFUNCTION(BlueprintCallable, CallInEditor, Category = "EnvGen")
+	UFUNCTION(BlueprintCallable, CallInEditor, Category = "TargetGen")
 	void ClearEnvironment();
 
-	UFUNCTION(BlueprintCallable, Category = "EnvGen")
+	UFUNCTION(BlueprintCallable, Category = "TargetGen")
 	void SetupHISMComponents();
 
 	// -------------------------------------------------------------------------
@@ -136,32 +136,32 @@ public:
 	bool ExportTargetsToJson(const FString& FileName);
 
 	UFUNCTION(BlueprintPure, Category = "Dataset")
-	const TArray<FEnvTargetRecord>& GetSpawnedTargets() const { return SpawnedTargets; }
+	const TArray<FTargetRecord>& GetSpawnedTargets() const { return SpawnedTargets; }
 
 	// -------------------------------------------------------------------------
 	// 4. 에디터 설정 프로퍼티
 	// -------------------------------------------------------------------------
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "EnvGen|Config")
-	TArray<FEnvElementConfig> EnvElements;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TargetGen|Config")
+	TArray<FTargetConfig> EnvElements;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "EnvGen|Config", meta = (ClampMin = "50.0"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TargetGen|Config", meta = (ClampMin = "50.0"))
 	float GridSpacing;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "EnvGen|Config")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TargetGen|Config")
 	float PositionJitter;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "EnvGen|Config", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TargetGen|Config", meta = (ClampMin = "0.0", ClampMax = "1.0"))
 	float AlignToSurfaceNormal;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "EnvGen|Config")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TargetGen|Config")
 	FVector FallbackBoundsExtent;
 
 	// 런타임 인스턴스 및 기록 데이터
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "EnvGen|Runtime")
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "TargetGen|Runtime")
 	TArray<TObjectPtr<UHierarchicalInstancedStaticMeshComponent>> HISMComponents;
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Dataset|Runtime")
-	TArray<FEnvTargetRecord> SpawnedTargets;
+	TArray<FTargetRecord> SpawnedTargets;
 
 protected:
 	virtual void BeginPlay() override;

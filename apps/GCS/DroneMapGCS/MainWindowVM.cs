@@ -1,6 +1,8 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using System;
 using System.IO;
+using System.Linq;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
@@ -9,7 +11,10 @@ namespace DroneMapGCS
 {
     public partial class MainWindowVM : ObservableObject
     {
-        private const string DefaultCapturePath = @"D:\ytlee\ureal\DroneMapSim\Saved\DroneCaptures";
+        // 언리얼 엔진(DronePawn.cpp)의 FPaths::ProjectSavedDir() / "DroneCaptures" 와 동일한 폴더를 가리킴
+        // (.uproject 파일이 있는 폴더 = 언리얼 프로젝트 루트, 그 하위의 Saved\DroneCaptures)
+        private const string CaptureSubFolder = "DroneCaptures";
+        private static readonly string DefaultCapturePath = ResolveCapturePath(CaptureSubFolder);
         private readonly ImageWatcherService _watcherService;
         private readonly CommTelemetryService _telemetryService;
         private readonly CommCmdService _commandService;
@@ -40,6 +45,30 @@ namespace DroneMapGCS
             _commandService = new CommCmdService("127.0.0.1", 9000);
 
             UpdateCanvasGeometry(800, 800);
+        }
+
+        /// <summary>
+        /// 실행 파일 위치(bin\Debug\net8.0-windows 등)에서 상위 폴더로 올라가며
+        /// *.uproject 파일(언리얼 프로젝트 루트, apps\engine\DroneMapSim.uproject)을 찾습니다.
+        /// 언리얼 엔진은 FPaths::ProjectSavedDir()가 이 .uproject 파일 위치 기준 Saved 폴더를 가리키므로,
+        /// GCS도 동일하게 "<.uproject 위치>\Saved\DroneCaptures" 를 사용해야 실제 캡처 경로와 일치합니다.
+        /// </summary>
+        private static string ResolveCapturePath(string subFolder)
+        {
+            DirectoryInfo? dir = new DirectoryInfo(AppContext.BaseDirectory);
+
+            while (dir != null)
+            {
+                if (dir.EnumerateFiles("*.uproject").Any())
+                {
+                    return Path.GetFullPath(Path.Combine(dir.FullName, "Saved", subFolder));
+                }
+
+                dir = dir.Parent;
+            }
+
+            // .uproject를 못 찾으면 기존 방식(실행 파일 기준 상대 경로)의 저장소 레이아웃으로 대체
+            return Path.GetFullPath(Path.Combine("..", "..", "..", "..", "..", "engine", "Saved", subFolder), AppContext.BaseDirectory);
         }
 
         /// <summary>
@@ -142,6 +171,11 @@ namespace DroneMapGCS
                 case Key.C:
                     SendFlightControl(forward: 0.0f, right: 0.0f, pitch: 0.0f, yaw: 1.0f);
                     desc = "우측 러더 (Rudder Right) [C]";
+                    break;
+
+                case Key.D1:
+                    _commandService.SendJsonCommand(new AutoNavCommand());
+                    desc = "자동 조정[1]";
                     break;
 
                 default:

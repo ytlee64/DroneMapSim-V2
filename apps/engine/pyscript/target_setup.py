@@ -26,7 +26,7 @@ log_info, _, log_error = make_loggers(
     raise_on_error=True,
 )
 
-TOTAL_STEPS = 5
+TOTAL_STEPS = 6
 
 
 def log_step(step, msg):
@@ -146,7 +146,9 @@ def build_target_elements(asset_reg, asset_lib):
     if not element_configs:
         log_error("config.py에 'TARGET_ELEMENT_CONFIGS'가 비어있습니다.")
 
-    new_elements_array = unreal.Array(unreal.EnvElementConfig)
+    # TArray 프로퍼티에는 Python list를 직접 set_editor_property로 넘겨도 반영됩니다.
+    # 일부 UE/Python 조합에서 unreal.Array(...) 생성자가 타입 오류를 내므로 list를 사용합니다.
+    new_elements_array = []
     failed_meshes = []
 
     log_step(4, "차량(표적/비표적) 메쉬 검증 및 로드 중...")
@@ -159,7 +161,7 @@ def build_target_elements(asset_reg, asset_lib):
             failed_meshes.append(mesh_name)
             continue
 
-        cfg = unreal.EnvElementConfig()
+        cfg = unreal.TargetConfig()
         cfg.set_editor_property("ElementName", str(item.get("name", mesh_name)))
         cfg.set_editor_property("ElementMesh", mesh_asset)
         cfg.set_editor_property("SpawnWeight", float(item.get("weight", 0.01)))
@@ -187,6 +189,111 @@ def build_target_elements(asset_reg, asset_lib):
         log_error(f"다음 {len(failed_meshes)}개의 메쉬를 로드하지 못했습니다:\n" + "\n".join(f"  - {m}" for m in failed_meshes))
 
     return new_elements_array
+
+
+def get_water_actors(all_actors):
+    """
+    레벨에서 WaterBody 계열 액터를 수집합니다.
+    """
+    water_actors = []
+    for actor in all_actors:
+        try:
+            class_name = actor.get_class().get_name()
+        except Exception:
+            class_name = ""
+
+        if "WaterBody" in class_name or "Water" in actor.get_name():
+            water_actors.append(actor)
+
+    return water_actors
+
+
+def collect_water_bounds_2d(water_actors, xy_margin_cm):
+    bounds_2d = []
+    for actor in water_actors:
+        try:
+            origin, extent = actor.get_actor_bounds(False)
+        except Exception:
+            continue
+
+        bounds_2d.append((
+            origin.x - extent.x - xy_margin_cm,
+            origin.x + extent.x + xy_margin_cm,
+            origin.y - extent.y - xy_margin_cm,
+            origin.y + extent.y + xy_margin_cm,
+        ))
+    return bounds_2d
+
+
+def is_in_any_water_bounds_2d(location, water_bounds_2d):
+    x = location.x
+    y = location.y
+    for min_x, max_x, min_y, max_y in water_bounds_2d:
+        if min_x <= x <= max_x and min_y <= y <= max_y:
+            return True
+    return False
+
+
+def remove_spawned_instances_in_water(target_actor, all_actors):
+    """
+    GenerateEnvironment 이후 WaterBody 영역 안의 인스턴스를 제거합니다.
+    config.TARGET_GEN_PARAMS/ENV_GEN_PARAMS 에서 아래 키를 사용합니다.
+      - EnableWaterExclusion (default: True)
+      - WaterXYMarginCm (default: 200.0)
+    """
+    params = getattr(config, "TARGET_GEN_PARAMS", getattr(config, "ENV_GEN_PARAMS", {}))
+    enable_water_exclusion = bool(params.get("EnableWaterExclusion", True))
+    if not enable_water_exclusion:
+        log_info("  + Water exclusion 비활성화됨 (EnableWaterExclusion=False)")
+        return 0
+
+    water_actors = get_water_actors(all_actors)
+    if not water_actors:
+        log_info("  + WaterBody 액터가 없어 바다 제외 단계를 건너뜁니다.")
+        return 0
+
+    xy_margin_cm = float(params.get("WaterXYMarginCm", 200.0))
+    water_bounds_2d = collect_water_bounds_2d(water_actors, xy_margin_cm)
+    if not water_bounds_2d:
+        log_info("  + WaterBody 경계를 계산하지 못해 바다 제외 단계를 건너뜁니다.")
+        return 0
+
+    removed_count = 0
+    hism_components = list(getattr(target_actor, "hism_components", []) or [])
+
+    for hism in hism_components:
+        if not hism:
+            continue
+
+        try:
+            instance_count = int(hism.get_instance_count())
+        except Exception:
+            continue
+
+        if instance_count <= 0:
+            continue
+
+        remove_indices = []
+        for idx in range(instance_count):
+            try:
+                tr = hism.get_instance_transform(idx, world_space=True)
+            except Exception:
+                continue
+
+            loc = tr.translation
+            if is_in_any_water_bounds_2d(loc, water_bounds_2d):
+                remove_indices.append(idx)
+
+        for idx in reversed(remove_indices):
+            if hism.remove_instance(idx):
+                removed_count += 1
+
+    if removed_count > 0:
+        log_info(f"  + 바다 영역 인스턴스 제거 완료: {removed_count}개")
+    else:
+        log_info("  + 바다 영역에서 제거할 인스턴스가 없습니다.")
+
+    return removed_count
 
 
 def generate_targets(target_actor):
@@ -223,6 +330,11 @@ def main():
         target_actor.set_editor_property("EnvElements", elements_array)
 
     generate_targets(target_actor)
+
+    log_step(6, "바다(WaterBody) 영역 제외 후처리 실행 중...")
+    removed = remove_spawned_instances_in_water(target_actor, all_actors)
+    if removed > 0:
+        log_info("✅ 바다 제외 후처리 적용 완료")
 
 
 if __name__ == "__main__":
