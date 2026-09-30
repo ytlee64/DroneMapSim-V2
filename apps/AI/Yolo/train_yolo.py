@@ -31,7 +31,7 @@ def main():
     print("==========================================================")
 
     # 1. Load Pretrained Lightweight Model (yolov8n.pt or yolo11n.pt)
-    # Keep base weights under Python/Yolo/weights to avoid root-level files.
+    # Keep base weights under apps/AI/Yolo/weights to avoid root-level files.
     model = YOLO(resolve_base_weights_path())
 
     # 2. Start Training
