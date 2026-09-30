@@ -46,7 +46,7 @@ flowchart LR
 
   subgraph DATA[Dataset & AI Pipeline]
     CAP[Capture Output PNG/TXT/CSV]
-    WT[Python/Yolo Dataset]
+    WT[apps/AI/Yolo Dataset]
     YOLO[YOLO Training / Inference]
   end
 
@@ -300,7 +300,7 @@ sequenceDiagram
 
 ### 6.2. 권장 폴더 구조
 ```text
-Python/Yolo/
+apps/AI/Yolo/
   YoloDataset/
     images/
     labels/
@@ -417,7 +417,7 @@ Python/Yolo/
 ## 10. 다음 개발 우선순위 설계안
 
 ### 10.1. 1순위: 미션 오케스트레이터 추가
-현재 구조에는 [Source/DroneMapSim/Public/NavBase.h](../Source/DroneMapSim/Public/NavBase.h), [Source/DroneMapSim/Public/NavFixedWing.h](../Source/DroneMapSim/Public/NavFixedWing.h), [Source/DroneMapSim/Public/WaypointItemData.h](../Source/DroneMapSim/Public/WaypointItemData.h) 를 통합하는 상위 미션 계층이 없다.
+현재 구조에는 [apps/engine/Source/DroneMapSim/Public/NavBase.h](../apps/engine/Source/DroneMapSim/Public/NavBase.h), [apps/engine/Source/DroneMapSim/Public/NavFixedWing.h](../apps/engine/Source/DroneMapSim/Public/NavFixedWing.h), [apps/engine/Source/DroneMapSim/Public/WaypointItemData.h](../apps/engine/Source/DroneMapSim/Public/WaypointItemData.h) 를 통합하는 상위 미션 계층이 없다.
 우선 미션 실행과 상태 전이를 담당하는 오케스트레이터를 추가해야 한다.
 
 권장 설계:
@@ -429,7 +429,7 @@ Python/Yolo/
 이 단계가 선행되어야 자율 항법, 캡처, 지도 가시화를 단일 임무 흐름으로 통합할 수 있다.
 
 ### 10.2. 2순위: 데이터셋 관리 계층 추가
-현재 [Source/DroneMapSim/Public/TargetGenActor.h](../Source/DroneMapSim/Public/TargetGenActor.h) 와 [Python/Unreal/target_setup.py](../Python/Unreal/target_setup.py) 는 표적 생성까지 담당하나, 학습용 데이터 정리 계층이 부족하다.
+현재 [apps/engine/Source/DroneMapSim/Public/TargetGenActor.h](../apps/engine/Source/DroneMapSim/Public/TargetGenActor.h) 와 [apps/engine/pyscript/target_setup.py](../apps/engine/pyscript/target_setup.py) 는 표적 생성까지 담당하나, 학습용 데이터 정리 계층이 부족하다.
 
 권장 설계:
 - `UDatasetManifestService` 또는 Python 후처리 스크립트 세트
@@ -440,7 +440,7 @@ Python/Yolo/
 이 단계는 데이터셋 재현성과 학습 비교 가능성을 확보하기 위해 필요하다.
 
 ### 10.3. 3순위: 통신 프로토콜 정리
-현재 [Source/DroneMapSim/Public/CommLink.h](../Source/DroneMapSim/Public/CommLink.h) 는 송수신 기반은 있으나, 프로토콜 계약이 느슨하다.
+현재 [apps/engine/Source/DroneMapSim/Public/CommLink.h](../apps/engine/Source/DroneMapSim/Public/CommLink.h) 는 송수신 기반은 있으나, 프로토콜 계약이 느슨하다.
 
 권장 설계:
 - 명령 버전 필드 추가
@@ -452,7 +452,7 @@ Python/Yolo/
 이 단계는 명령 증가에 따른 디버깅 비용을 억제하고, GCS-UE 계약을 고정하기 위해 필요하다.
 
 ### 10.4. 4순위: Python 셋업 스크립트 정리
-[Python/Unreal/drone_setup.py](../Python/Unreal/drone_setup.py) 와 [Python/Unreal/target_setup.py](../Python/Unreal/target_setup.py) 의 역할은 적절하나, 운영 안정성을 위해 경계를 명확히 해야 한다.
+[apps/engine/pyscript/drone_setup.py](../apps/engine/pyscript/drone_setup.py) 와 [apps/engine/pyscript/target_setup.py](../apps/engine/pyscript/target_setup.py) 의 역할은 적절하나, 운영 안정성을 위해 경계를 명확히 해야 한다.
 
 권장 설계:
 - `drone_setup.py`: 비행 인프라 전용, 드론/관찰자/게임모드/캡처 연결만 담당

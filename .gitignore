@@ -1,37 +1,36 @@
 # ====================================================================
-# Unreal Engine 5 C++ & Drone Project (.gitignore)
+# DroneMapSim repository ignores
+# Current layout: apps/engine, apps/GCS, apps/AI
 # ====================================================================
 
-# --- 언리얼 엔진 자동 생성 임시 폴더 (루트 및 모든 서브모듈) ---
+# --- Unreal Engine generated folders and caches ---
 Binaries/
 DerivedDataCache/
 Intermediate/
 Saved/
-Build/
-Content/*
-!Content/01_DroneMapSim/
 .ue/
-
-*/Binaries/
-*/DerivedDataCache/
-*/Intermediate/
-*/Saved/
+**/Binaries/
+**/DerivedDataCache/
+**/Intermediate/
+**/Saved/
 Plugins/*/Binaries/
 Plugins/*/Intermediate/
-
- 
-# --- 언리얼 라이브 코딩 및 빌드 아티팩트 ---
 .livecoding/
 *.patch_*.exp
 *.target
 *.modules
-*.log
 
-# --- 비주얼 스튜디오 / IDE 관련 캐시 파일 ---
+# Keep only curated engine content tracked.
+/Content/*
+!/Content/01_DroneMapSim/
+/apps/engine/Content/*
+!/apps/engine/Content/01_DroneMapSim/
+
+# --- IDE and solution metadata ---
 .vs/
 .idea/
 .vscode/
-*.sln
+.vsconfig
 *.VC.db
 *.VC.opendb
 *.opensdf
@@ -39,13 +38,20 @@ Plugins/*/Intermediate/
 *.suo
 *.user
 *.rsuser
+*.userprefs
+*.usertasks
+*.userosv3
+*.sln.docstates
 *.vcxproj
 *.vcxproj.filters
 *.vcxproj.user
 *.xcodeproj
 *.xcworkspace
+*.sln
+!apps/engine/DroneMapSim.sln
+!apps/GCS/DroneMapGCS.sln
 
-# --- 컴파일 산출물 / 디버그 심볼 ---
+# --- Native / .NET build outputs ---
 *.obj
 *.pdb
 *.ipdb
@@ -53,86 +59,58 @@ Plugins/*/Intermediate/
 *.ilk
 *.exp
 *.lib
-
-# --- 파이썬 및 딥러닝(YOLO) 관련 ---
-__pycache__/
-**/__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.ipynb_checkpoints/
-
-# 파이썬 가상타겟 (.venv 또는 env)
-.venv/
-venv/
-env/
-
-# YOLO 학습 산출물 및 거대 가중치 파일 (*.pt, *.onnx 등)
-Python/Yolo/YoloDataset/
-Python/Yolo/runs/
-Python/Yolo/weights/
-*.pt
-*.pth
-*.onnx
-*.weights
-
-# --- 기타 로컬 백업 및 임시 폴더 ---
-Backup/
-temp/
-Temp/
-tmp/
-
-# --- OS 생성 파일 ---
-Thumbs.db
-Desktop.ini
-.DS_Store
-
-# ====================================================================
-# Visual Studio C# (.NET / WPF / WinForms / GCS) 빌드 산출물
-# ====================================================================
-[Bb]in/
-[Oo]bj/
-[Ll]og/
-[Ll]ogs/
-
-# C# 프로젝트별/서브폴더별 bin, obj 전체 무시
+*.Generated.cs
+Generated_*.cs
 **/[Bb]in/
 **/[Oo]bj/
-
-# NuGet 패키지 캐시 및 복원 임시 파일
+[Ll]og/
+[Ll]ogs/
+*.log
 packages/
 **/packages/
 *.nuget.props
 *.nuget.targets
 project.lock.json
 project.assets.json
-
-# C# Roslyn 컴파일러 및 코드 분석기 캐시
-*.Generated.cs
-Generated_*.cs
-.vs/
 .cr/
-
-# MSBuild 및 C# 사용자별 설정 파일
-*.userprefs
-*.usertasks
-*.suo
-*.user
-*.userosv3
-*.sln.docstates
 *.vshost.exe
 *.vshost.exe.manifest
 *.vshost.exe.config
-
-# C# 테스트 결과 및 프로파일링
 TestResults/
 [Tt]est[Rr]esult*/
 *.trx
 *.coverage
 *.coveragexml
-
-# 기타 빌드 시 생성되는 C# 임시 캐시
 _ReSharper*/
 *.dotCover
 *.ncrunch*
 *.NCrunch*
+
+# --- Python caches and local environments ---
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.ipynb_checkpoints/
+.venv/
+venv/
+env/
+
+# --- AI / YOLO generated artifacts ---
+/apps/AI/Yolo/YoloDataset/
+/apps/AI/Yolo/runs/
+/apps/AI/Yolo/weights/
+*.pt
+*.pth
+*.onnx
+*.weights
+
+# --- Local utilities, temp files, OS cruft ---
+Backup/
+temp/
+Temp/
+tmp/
+move_unreal_to_apps_engine.ps1
+Thumbs.db
+Desktop.ini
+.DS_Store
