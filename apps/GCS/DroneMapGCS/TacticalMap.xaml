@@ -1,0 +1,38 @@
+﻿<UserControl x:Class="DroneMapGCS.TacticalMap"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <GroupBox Header="DroneMapSim Tactical Recon &amp; Navigation Map">
+        <Grid ClipToBounds="True">
+            <!-- 지도 바탕 그리드 -->
+            <Border Background="{StaticResource SurfaceAlt}" CornerRadius="4"/>
+
+            <!-- 실시간 항법 및 궤적 렌더링 캔버스 -->
+            <Canvas x:Name="MapCanvas" SizeChanged="MapCanvas_SizeChanged">
+                <!-- 사각형 웨이포인트 경로선 -->
+                <Polygon Points="{Binding WaypointGuidePoints}" 
+                         Stroke="{StaticResource AccentHover}" StrokeThickness="1.5" StrokeDashArray="4 2"/>
+
+                <!-- 실시간 비행 궤적선 -->
+                <Path Data="{Binding TrajectoryGeometry}" 
+                      Stroke="#00FFCC" StrokeThickness="2.5" 
+                      StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                      Panel.ZIndex="5"/>
+
+                <!-- 드론 현재 위치 마커 -->
+                <Ellipse Canvas.Left="{Binding MarkerLeft}" Panel.ZIndex="6" Canvas.Top="{Binding MarkerTop}"
+                         Width="14" Height="14" Fill="{StaticResource DangerBrush}" Stroke="#FFFFFF" StrokeThickness="2"/>
+
+                <!-- 헤딩(기수) 방향 지시선 -->
+                <Line X1="{Binding HeadingX1}" Y1="{Binding HeadingY1}"
+                      X2="{Binding HeadingX2}" Y2="{Binding HeadingY2}"
+                      Stroke="{StaticResource WarningBrush}" StrokeThickness="2.5"
+                      Panel.ZIndex="6"/>
+            </Canvas>
+
+            <!-- 궤적 초기화 버튼 -->
+            <Button Content="궤적 리셋" Command="{Binding ClearTrajectoryCommand}"
+                    HorizontalAlignment="Right" VerticalAlignment="Top" Margin="14"
+                    Padding="12,5" FontSize="12"/>
+        </Grid>
+    </GroupBox>
+</UserControl>

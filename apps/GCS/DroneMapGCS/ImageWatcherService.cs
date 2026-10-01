@@ -134,10 +134,7 @@ namespace DroneMapGCS
         {
             int pixelWidth = source.PixelWidth;
             int pixelHeight = source.PixelHeight;
-            if (pixelWidth <= 0 || pixelHeight <= 0)
-            {
-                return source;
-            }
+            if (pixelWidth <= 0 || pixelHeight <= 0) return source;
 
             string labelFilePath = Path.ChangeExtension(imageFilePath, ".txt");
             bool hasGroundTruth = File.Exists(labelFilePath);
@@ -146,54 +143,74 @@ namespace DroneMapGCS
                 ? _detector.Detect(source)
                 : new List<DetectionBox>();
 
-            if (!hasGroundTruth && detections.Count == 0)
+            // 1. Ground Truth 파싱
+            var groundTruths = new List<Rect>();
+            if (hasGroundTruth)
             {
-                return source;
+                foreach (string line in File.ReadAllLines(labelFilePath))
+                {
+                    if (string.IsNullOrWhiteSpace(line)) continue;
+                    string[] parts = line.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                    if (parts.Length < 5) continue;
+
+                    if (double.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out double cx) &&
+                        double.TryParse(parts[2], NumberStyles.Float, CultureInfo.InvariantCulture, out double cy) &&
+                        double.TryParse(parts[3], NumberStyles.Float, CultureInfo.InvariantCulture, out double w) &&
+                        double.TryParse(parts[4], NumberStyles.Float, CultureInfo.InvariantCulture, out double h))
+                    {
+                        double bw = w * pixelWidth;
+                        double bh = h * pixelHeight;
+                        groundTruths.Add(new Rect((cx * pixelWidth) - (bw * 0.5), (cy * pixelHeight) - (bh * 0.5), bw, bh));
+                    }
+                }
             }
+
+            if (groundTruths.Count == 0 && detections.Count == 0) return source;
 
             var drawingVisual = new DrawingVisual();
             using (DrawingContext dc = drawingVisual.RenderOpen())
             {
                 dc.DrawImage(source, new Rect(0, 0, pixelWidth, pixelHeight));
 
-                if (hasGroundTruth)
+                // 펜 정의 (동결하여 성능 최적화)
+                var hitPen = new Pen(Brushes.Cyan, 2.5);          // ⭐️ 적중 (TP) - 선명한 청록색
+                hitPen.Freeze();
+
+                var missedPen = new Pen(Brushes.Yellow, 2.0);      // ⭐️ 미탐 (FN) - 노란색 점선 (못 찾은 정답)
+                missedPen.DashStyle = DashStyles.Dash;
+                missedPen.Freeze();
+
+                var falseAlarmPen = new Pen(Brushes.Red, 2.0);    // ⭐️ 오탐 (FP) - 빨간색 (잘못 찾음)
+                falseAlarmPen.Freeze();
+
+                // IoU 매칭 추적용 배열
+                bool[] gtMatched = new bool[groundTruths.Count];
+
+                // 2. AI 추론값들을 정답과 비교
+                foreach (DetectionBox det in detections)
                 {
-                    var groundTruthPen = new Pen(Brushes.LimeGreen, 2.0);
-                    groundTruthPen.Freeze();
-
-                    foreach (string line in File.ReadAllLines(labelFilePath))
+                    bool isHit = false;
+                    for (int i = 0; i < groundTruths.Count; i++)
                     {
-                        if (string.IsNullOrWhiteSpace(line)) continue;
-
-                        string[] parts = line.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                        // YOLO 포맷: class_id center_x center_y width height (모두 0~1 정규화 값)
-                        if (parts.Length < 5) continue;
-
-                        if (!double.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out double centerXNorm) ||
-                            !double.TryParse(parts[2], NumberStyles.Float, CultureInfo.InvariantCulture, out double centerYNorm) ||
-                            !double.TryParse(parts[3], NumberStyles.Float, CultureInfo.InvariantCulture, out double widthNorm) ||
-                            !double.TryParse(parts[4], NumberStyles.Float, CultureInfo.InvariantCulture, out double heightNorm))
+                        // IoU(교집합/합집합) 계산
+                        if (CalculateIoU(det.Rect, groundTruths[i]) >= 0.4) // 40% 이상 일치 시 정답 인정
                         {
-                            continue;
+                            isHit = true;
+                            gtMatched[i] = true;
+                            break;
                         }
-
-                        double boxWidth = widthNorm * pixelWidth;
-                        double boxHeight = heightNorm * pixelHeight;
-                        double boxLeft = (centerXNorm * pixelWidth) - (boxWidth * 0.5);
-                        double boxTop = (centerYNorm * pixelHeight) - (boxHeight * 0.5);
-
-                        dc.DrawRectangle(null, groundTruthPen, new Rect(boxLeft, boxTop, boxWidth, boxHeight));
                     }
+
+                    // 맞췄으면 청록색(Cyan), 헛다리면 빨간색(Red)
+                    dc.DrawRectangle(null, isHit ? hitPen : falseAlarmPen, det.Rect);
                 }
 
-                if (detections.Count > 0)
+                // 3. AI가 끝내 찾지 못한 정답(미탐)은 노란색 점선으로 표시
+                for (int i = 0; i < groundTruths.Count; i++)
                 {
-                    var detectionPen = new Pen(Brushes.Red, 2.0);
-                    detectionPen.Freeze();
-
-                    foreach (DetectionBox box in detections)
+                    if (!gtMatched[i])
                     {
-                        dc.DrawRectangle(null, detectionPen, box.Rect);
+                        dc.DrawRectangle(null, missedPen, groundTruths[i]);
                     }
                 }
             }
@@ -218,6 +235,19 @@ namespace DroneMapGCS
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// 두 박스의 겹치는 비율 (Intersection over Union) 계산 헬퍼
+        /// </summary>
+        private static double CalculateIoU(Rect r1, Rect r2)
+        {
+            Rect intersect = Rect.Intersect(r1, r2);
+            if (intersect.IsEmpty) return 0.0;
+
+            double intersectArea = intersect.Width * intersect.Height;
+            double unionArea = (r1.Width * r1.Height) + (r2.Width * r2.Height) - intersectArea;
+            return unionArea <= 0 ? 0.0 : intersectArea / unionArea;
         }
 
         public void Dispose()

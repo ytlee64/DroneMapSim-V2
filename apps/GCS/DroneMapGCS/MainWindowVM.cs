@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using System;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
@@ -11,14 +12,10 @@ namespace DroneMapGCS
 {
     public partial class MainWindowVM : ObservableObject
     {
-        // 언리얼 엔진(DronePawn.cpp)의 FPaths::ProjectSavedDir() / "DroneCaptures" 와 동일한 폴더를 가리킴
-        // (.uproject 파일이 있는 폴더 = 언리얼 프로젝트 루트, 그 하위의 Saved\DroneCaptures)
         private const string CaptureSubFolder = "DroneCaptures";
         private static readonly string DefaultCapturePath = ResolveCapturePath(CaptureSubFolder);
 
-        // YOLOv8 학습 결과(ultralytics best.pt -> best.onnx 로 변환) 경로
-        // apps\AI\Yolo\train_yolo.py 로 학습되어 apps\AI\Yolo\runs\detect\drone_vehicle_model\weights 에 저장됨
-        private const string YoloModelRelativePath = @"apps\AI\Yolo\runs\detect\drone_vehicle_model\weights\best.onnx";
+        private const string YoloModelRelativePath = @"apps\AI\weights\best.onnx";
         private static readonly string YoloModelPath = ResolveRepoRootPath(YoloModelRelativePath);
 
         private readonly ImageWatcherService _watcherService;
@@ -27,6 +24,10 @@ namespace DroneMapGCS
 
         private TelemtryPacket? _latestTelemetry;
 
+        // ⭐️ 접미사 VM 통일: TacticalMapVM 소유
+        public TacticalMapVM Map { get; } = new TacticalMapVM();
+
+        // FPV 영상 및 계측 상태
         [ObservableProperty] private BitmapImage? _currentFrame;
         [ObservableProperty] private string _statusText = "대기 중...";
         [ObservableProperty] private string _currentFileName = "-";
@@ -34,11 +35,17 @@ namespace DroneMapGCS
         [ObservableProperty] private int _totalCaptureCount = 0;
         [ObservableProperty] private string _telemetryText = "X: 0.0m | Y: 0.0m | Alt: 0.0m [MANUAL]";
         [ObservableProperty] private string _lastCapturePosText = "마지막 캡처 위치: 없음";
-
-        // 마지막으로 전송한 조종 명령 알림
         [ObservableProperty] private string _lastActionNotice = "조종 대기 (화면 클릭 후 키보드 조작 가능)";
 
-        private int AutoNavEnable=0;
+        // GCS 조종 패널 바인딩
+        [ObservableProperty] private string _flightModeText = "MANUAL";
+        [ObservableProperty] private string _bankAngleText = "0°";
+        [ObservableProperty] private string _gimbalPitchText = "P: -45.0°";
+        [ObservableProperty] private string _gimbalYawText = "Y: 0.0°";
+
+        private int AutoNavEnable = 0;
+        private float _currentGimbalPitch = -45.0f;
+        private float _currentGimbalYaw = 0.0f;
 
         public MainWindowVM()
         {
@@ -49,177 +56,158 @@ namespace DroneMapGCS
             _telemetryService.TelemetryReceived += OnTelemetryReceived;
             _telemetryService.Start(9001);
 
-            // 언리얼 명령 포트 (9000번) 송신기 초기화
             _commandService = new CommCmdService("127.0.0.1", 9000);
-
-            UpdateCanvasGeometry(800, 800);
         }
 
-        /// <summary>
-        /// 실행 파일 위치(bin\Debug\net8.0-windows 등)에서 상위 폴더로 올라가며
-        /// *.uproject 파일(언리얼 프로젝트 루트, apps\engine\DroneMapSim.uproject)을 찾습니다.
-        /// 언리얼 엔진은 FPaths::ProjectSavedDir()가 이 .uproject 파일 위치 기준 Saved 폴더를 가리키므로,
-        /// GCS도 동일하게 "<.uproject 위치>\Saved\DroneCaptures" 를 사용해야 실제 캡처 경로와 일치합니다.
-        /// </summary>
         private static string ResolveCapturePath(string subFolder)
         {
             DirectoryInfo? dir = new DirectoryInfo(AppContext.BaseDirectory);
-
             while (dir != null)
             {
                 if (dir.EnumerateFiles("*.uproject").Any())
-                {
                     return Path.GetFullPath(Path.Combine(dir.FullName, "Saved", subFolder));
-                }
-
                 dir = dir.Parent;
             }
-
-            // .uproject를 못 찾으면 기존 방식(실행 파일 기준 상대 경로)의 저장소 레이아웃으로 대체
             return Path.GetFullPath(Path.Combine("..", "..", "..", "..", "..", "engine", "Saved", subFolder), AppContext.BaseDirectory);
         }
 
-        /// <summary>
-        /// 실행 파일 위치에서 상위로 올라가며 저장소 루트(.git 폴더가 있는 곳)를 찾아
-        /// 그 기준으로 relativePath(예: apps\AI\Yolo\...)를 절대 경로로 변환합니다.
-        /// </summary>
         private static string ResolveRepoRootPath(string relativePath)
         {
             DirectoryInfo? dir = new DirectoryInfo(AppContext.BaseDirectory);
-
             while (dir != null)
             {
                 if (Directory.Exists(Path.Combine(dir.FullName, ".git")))
-                {
                     return Path.GetFullPath(Path.Combine(dir.FullName, relativePath));
-                }
-
                 dir = dir.Parent;
             }
-
-            // 저장소 루트를 못 찾으면 실행 파일 기준 상대 경로(apps\GCS\DroneMapGCS\bin\...)의 레이아웃으로 대체
             return Path.GetFullPath(Path.Combine("..", "..", "..", "..", "..", relativePath), AppContext.BaseDirectory);
         }
 
-        /// <summary>
-        /// 키보드 누름(KeyDown) 이벤트 처리
-        /// </summary>
+        // =========================================================
+        // 비행 제어 및 모드 전환 RelayCommands
+        // =========================================================
+        [RelayCommand]
+        private void SetManualMode()
+        {
+            AutoNavEnable = 0;
+            _commandService.SendJsonCommand(new AutoNavCommand { Enable = 0 });
+            FlightModeText = "MANUAL";
+            StatusText = $"[{DateTime.Now:HH:mm:ss}] 수동 비행 모드 [MANUAL] 전환 완료";
+        }
+
+        [RelayCommand]
+        private void SetAutoNav()
+        {
+            AutoNavEnable = 1;
+            _commandService.SendJsonCommand(new AutoNavCommand { Enable = 1 });
+            FlightModeText = "AUTO NAV";
+            StatusText = $"[{DateTime.Now:HH:mm:ss}] 자동 항법 모드 [AUTO NAV] 활성화 완료";
+        }
+
+        [RelayCommand]
+        private void SetLoiter()
+        {
+            FlightModeText = "LOITER 40M";
+            StatusText = $"[{DateTime.Now:HH:mm:ss}] 선회 정찰 모드 [LOITER 40M] 전환 완료";
+        }
+
+        [RelayCommand]
+        private void SetRTH()
+        {
+            FlightModeText = "RTH";
+            StatusText = $"[{DateTime.Now:HH:mm:ss}] 원점 복귀 [RTH] 명령 전송 완료";
+        }
+
+        [RelayCommand]
+        private void Capture()
+        {
+            _commandService.SendJsonCommand(new CaptureCommand());
+            StatusText = $"[{DateTime.Now:HH:mm:ss}] 📷 고해상도 캡처 [Space/C] 전송 완료";
+        }
+
+        [RelayCommand]
+        private void ToggleViewMode()
+        {
+            _commandService.SendJsonCommand(new ObserverCommand());
+            StatusText = $"[{DateTime.Now:HH:mm:ss}] ⟲ 뷰 모드 전환 [V] 전송 완료";
+        }
+
+        [RelayCommand]
+        private void ResetCounter()
+        {
+            TotalCaptureCount = 0;
+            StatusText = "수집 카운터가 리셋되었습니다.";
+        }
+
+        [RelayCommand]
+        private void ClearTrajectory() => Map.ClearTrajectory();
+
+        // =========================================================
+        // 키보드 조작 처리
+        // =========================================================
         public void HandleKeyDown(Key key)
         {
             string desc = "";
-
             switch (key)
             {
                 case Key.I:
-                    _commandService.SendJsonCommand(new TeleportCommand
-                    {
-                        LocX = 0,
-                        LocY = 0,
-                        LocZ = 100,
-                    });
+                    _commandService.SendJsonCommand(new TeleportCommand { LocX = 0, LocY = 0, LocZ = 100 });
                     Thread.Sleep(50);
-                    _commandService.SendJsonCommand(new GimbalCommand
-                    {
-                        Up = -180,
-                        Right = 0
-                    });
+                    _commandService.SendJsonCommand(new GimbalCommand { Up = -180, Right = 0 });
                     desc = "Drone Init[I]";
                     break;
-
                 case Key.Space:
-                    _commandService.SendJsonCommand(new CaptureCommand());
-                    desc = "CAPTURE_IMAGE [Space]";
-                    break;
-
-                // 🎥 시점 전환 (CYCLE)
+                case Key.C:
+                    Capture();
+                    return;
                 case Key.V:
                 case Key.O:
-                    _commandService.SendJsonCommand(new ObserverCommand());
-                    desc = "Observer / View Change [O/V]";
-                    break;
-
-                // 🎥 짐벌 상/하/좌/우 조작
+                    ToggleViewMode();
+                    return;
                 case Key.Up:
+                    _currentGimbalPitch = Math.Clamp(_currentGimbalPitch + 5.0f, -90.0f, 20.0f);
+                    GimbalPitchText = $"P: {_currentGimbalPitch:F1}°";
                     _commandService.SendJsonCommand(new GimbalCommand { Up = 5, Right = 0 });
                     desc = "GIMBAL Up [Up]";
                     break;
-
                 case Key.Down:
+                    _currentGimbalPitch = Math.Clamp(_currentGimbalPitch - 5.0f, -90.0f, 20.0f);
+                    GimbalPitchText = $"P: {_currentGimbalPitch:F1}°";
                     _commandService.SendJsonCommand(new GimbalCommand { Up = -5, Right = 0 });
                     desc = "GIMBAL Down [Down]";
                     break;
-
                 case Key.Left:
+                    _currentGimbalYaw = (_currentGimbalYaw - 5.0f) % 360.0f;
+                    GimbalYawText = $"Y: {_currentGimbalYaw:F1}°";
                     _commandService.SendJsonCommand(new GimbalCommand { Up = 0, Right = -5 });
                     desc = "GIMBAL Left [Left]";
                     break;
-
                 case Key.Right:
-                    // ⭐️ [버그 수정]: 기존 -5 -> +5로 정상 우회전 반영
+                    _currentGimbalYaw = (_currentGimbalYaw + 5.0f) % 360.0f;
+                    GimbalYawText = $"Y: {_currentGimbalYaw:F1}°";
                     _commandService.SendJsonCommand(new GimbalCommand { Up = 0, Right = 5 });
                     desc = "GIMBAL Right [Right]";
                     break;
-
-                // ===================================================
-                // 🕹️ 고정익 수동 비행 조종 (Forward, Right/Roll, Pitch, Yaw)
-                // ===================================================
-                // W/S: 스로틀 가감속
-                case Key.W:
-                    SendFlightControl(forward: 1.0f, right: 0.0f, pitch: 0.0f, yaw: 0.0f);
-                    desc = "가속 (Throttle Up) [W]";
-                    break;
-                case Key.S:
-                    SendFlightControl(forward: -1.0f, right: 0.0f, pitch: 0.0f, yaw: 0.0f);
-                    desc = "감속 (Throttle Down) [S]";
-                    break;
-
-                // A/D: 좌우 날개 뱅킹 턴 (Roll)
-                case Key.A:
-                    SendFlightControl(forward: 0.0f, right: -1.0f, pitch: 0.0f, yaw: 0.0f);
-                    desc = "좌측 뱅킹 선회 (Roll Left) [A]";
-                    break;
-                case Key.D:
-                    SendFlightControl(forward: 0.0f, right: 1.0f, pitch: 0.0f, yaw: 0.0f);
-                    desc = "우측 뱅킹 선회 (Roll Right) [D]";
-                    break;
-
-                // E/Q: 기수 상승/하강 (Pitch)
-                case Key.E:
-                    SendFlightControl(forward: 0.0f, right: 0.0f, pitch: 1.0f, yaw: 0.0f);
-                    desc = "기수 상승 (Pitch Up) [E]";
-                    break;
-                case Key.Q:
-                    SendFlightControl(forward: 0.0f, right: 0.0f, pitch: -1.0f, yaw: 0.0f);
-                    desc = "기수 하강 (Pitch Down) [Q]";
-                    break;
-
-                // Z/C: 방향타 러더 조향 (Yaw)
-                case Key.Z:
-                    SendFlightControl(forward: 0.0f, right: 0.0f, pitch: 0.0f, yaw: -1.0f);
-                    desc = "좌측 러더 (Rudder Left) [Z]";
-                    break;
-                case Key.C:
-                    SendFlightControl(forward: 0.0f, right: 0.0f, pitch: 0.0f, yaw: 1.0f);
-                    desc = "우측 러더 (Rudder Right) [C]";
-                    break;
-
+                case Key.W: SendFlightControl(1.0f, 0.0f, 0.0f, 0.0f); desc = "가속 [W]"; break;
+                case Key.S: SendFlightControl(-1.0f, 0.0f, 0.0f, 0.0f); desc = "감속 [S]"; break;
+                case Key.A: SendFlightControl(0.0f, -1.0f, 0.0f, 0.0f); desc = "좌선회 [A]"; break;
+                case Key.D: SendFlightControl(0.0f, 1.0f, 0.0f, 0.0f); desc = "우선회 [D]"; break;
+                case Key.E: SendFlightControl(0.0f, 0.0f, 1.0f, 0.0f); desc = "상승 [E]"; break;
+                case Key.Q: SendFlightControl(0.0f, 0.0f, -1.0f, 0.0f); desc = "하강 [Q]"; break;
+                //case Key.Z: SendFlightControl(0.0f, 0.0f, 0.0f, -1.0f); desc = "좌러더 [Z]"; break;
+                //case Key.C: SendFlightControl(0.0f, 0.0f, 0.0f, 1.0f); desc = "우러더 [C]"; break;
                 case Key.D1:
                     AutoNavEnable = (AutoNavEnable + 1) % 2;
                     _commandService.SendJsonCommand(new AutoNavCommand { Enable = AutoNavEnable });
-                    desc = "자동 조정[1]";
+                    FlightModeText = AutoNavEnable == 1 ? "AUTO NAV" : "MANUAL";
+                    desc = AutoNavEnable == 1 ? "자동 항법[1]" : "수동 모드[1]";
                     break;
-
-                default:
-                    return;
+                default: return;
             }
-
             LastActionNotice = desc;
             StatusText = $"[{DateTime.Now:HH:mm:ss}] {desc} 전송 완료";
         }
 
-        /// <summary>
-        /// ⭐️ 키를 뗐을 때(KeyUp) 스틱 중립 복귀 처리
-        /// </summary>
         public void HandleKeyUp(Key key)
         {
             switch (key)
@@ -231,33 +219,30 @@ namespace DroneMapGCS
                 case Key.E:
                 case Key.Q:
                 case Key.Z:
-                case Key.C:
-                    // 비행 키에서 손을 떼면 중립(0.0) 패킷 전송 -> 안정 수평 순항 유지!
                     SendFlightControl(0.0f, 0.0f, 0.0f, 0.0f);
                     break;
             }
         }
 
-        /// <summary>
-        /// 고정익 비행 제어 JSON 패킷 송신 헬퍼
-        /// </summary>
         private void SendFlightControl(float forward, float right, float pitch, float yaw)
         {
-            // MoveCommand 클래스 구조에 따라 아래 중 맞는 방식을 쓰시면 됩니다:
-            // 1. MoveCommand(float f, float r, float p, float y) 가 있는 경우:
             _commandService.SendJsonCommand(new MoveCommand(forward, right, pitch, yaw));
-
-            // 또는 직접 DTO 객체로 보낼 경우:
-            // _commandService.SendJsonCommand(new { id = "MOVE", forward = forward, right = right, pitch = pitch, yaw = yaw });
         }
 
+        // =========================================================
+        // 패킷 수신 처리
+        // =========================================================
         private void OnTelemetryReceived(TelemtryPacket packet)
         {
             _latestTelemetry = packet;
             Application.Current?.Dispatcher.Invoke(() =>
             {
                 TelemetryText = $"Count:{packet.Seq} X: {packet.LocX:F1}m  Y: {packet.LocY:F1}m  Alt: {packet.LocZ:F1}m | {packet.Speed:F1} m/s (Roll:{packet.RotRoll:F1}° Yaw:{packet.RotYaw:F1}°) [{packet.Mode}]";
-                UpdateTelemetryMap((float)packet.LocX, (float)packet.LocY, (float)packet.LocZ, (float)packet.RotYaw);
+                BankAngleText = $"{packet.RotRoll:F0}°";
+                if (!string.IsNullOrEmpty(packet.Mode)) FlightModeText = packet.Mode;
+
+                // ⭐️ Map(TacticalMapVM)으로 텔레메트리 전달
+                Map.UpdateTelemetryMap((float)packet.LocX, (float)packet.LocY, (float)packet.LocZ, (float)packet.RotYaw);
             });
         }
 
@@ -270,15 +255,9 @@ namespace DroneMapGCS
                 CurrentFileName = Path.GetFileName(fullPath);
                 ResolutionText = $"{bitmap.PixelWidth} x {bitmap.PixelHeight} px";
                 TotalCaptureCount++;
+                LastCapturePosText = $"마지막 캡처: X={capturePos?.LocX:F1}m, Y={capturePos?.LocY:F1}m";
                 StatusText = $"[정상 수신 #{TotalCaptureCount}] {DateTime.Now:HH:mm:ss.fff}";
             });
-        }
-
-        [RelayCommand]
-        private void ResetCounter()
-        {
-            TotalCaptureCount = 0;
-            StatusText = "카운트가 리셋되었습니다.";
         }
     }
 }

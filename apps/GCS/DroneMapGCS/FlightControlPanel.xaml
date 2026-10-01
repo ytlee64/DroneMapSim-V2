@@ -1,0 +1,129 @@
+﻿<UserControl x:Class="DroneMapGCS.FlightControlPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Border Style="{StaticResource CardBorder}" Padding="12">
+        <StackPanel>
+            <!-- 1) 헤더: 명령 모드 표시 -->
+            <DockPanel Margin="0,0,0,10">
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+                    <TextBlock Text="⌖" Foreground="{StaticResource AccentHover}" FontSize="16" FontWeight="Bold" Margin="0,0,6,0"/>
+                    <TextBlock Text="GCS FLIGHT &amp; GIMBAL COMMAND" FontWeight="Bold" Foreground="{StaticResource Foreground}" FontSize="12"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" HorizontalAlignment="Right">
+                    <TextBlock Text="MODE: " Foreground="{StaticResource Muted}" FontSize="12" FontWeight="SemiBold"/>
+                    <TextBlock Text="{Binding FlightModeText, FallbackValue='MANUAL'}" Foreground="{StaticResource AccentHover}" FontWeight="Bold" FontSize="12"/>
+                </StackPanel>
+            </DockPanel>
+
+            <!-- 2) 비행 모드 4버튼 바 -->
+            <Grid Margin="0,0,0,10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Button Grid.Column="0" Content="MANUAL" Margin="2,0" Padding="0,7" Background="{StaticResource Accent}" Foreground="White" BorderThickness="0" Command="{Binding SetManualModeCommand}"/>
+                <Button Grid.Column="1" Content="AUTO NAV" Margin="2,0" Padding="0,7" BorderThickness="0" Command="{Binding SetAutoNavCommand}"/>
+                <Button Grid.Column="2" Content="LOITER 40M" Margin="2,0" Padding="0,7" BorderThickness="0" Command="{Binding SetLoiterCommand}"/>
+                <Button Grid.Column="3" Content="RTH" Margin="2,0" Padding="0,7" BorderThickness="0" Command="{Binding SetRTHCommand}"/>
+            </Grid>
+
+            <!-- 3) 조종 D-패드 그리드 (좌: 비행 자세 / 우: 짐벌 제어) -->
+            <Grid Margin="0,0,0,10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="8"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- 좌측: 비행 자세 [W/A/S/D] -->
+                <Border Grid.Column="0" Background="{StaticResource SurfaceAlt}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="10">
+                    <StackPanel>
+                        <TextBlock Text="FLIGHT ATTITUDE [W/A/S/D]" Foreground="{StaticResource Muted}" FontSize="11" FontWeight="Bold" Margin="0,0,0,6"/>
+
+                        <!-- WASD 키패드 -->
+                        <Grid Width="130" Height="96" HorizontalAlignment="Center">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="30"/>
+                                <RowDefinition Height="30"/>
+                                <RowDefinition Height="30"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="40"/>
+                                <ColumnDefinition Width="48"/>
+                                <ColumnDefinition Width="40"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Button Grid.Row="0" Grid.Column="1" Content="W" Margin="2"/>
+                            <Button Grid.Row="1" Grid.Column="0" Content="A" Margin="2"/>
+                            <Border Grid.Row="1" Grid.Column="1" Background="{StaticResource Surface}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" Margin="2" CornerRadius="3">
+                                <TextBlock Text="{Binding BankAngleText, FallbackValue='0°'}" Foreground="{StaticResource AccentHover}" FontWeight="Bold" FontSize="11" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <Button Grid.Row="1" Grid.Column="2" Content="D" Margin="2"/>
+                            <Button Grid.Row="2" Grid.Column="1" Content="S" Margin="2"/>
+                        </Grid>
+
+                        <Grid Margin="0,6,0,0">
+                            <TextBlock Text="RUDDER:&#x0a;Q/E" Foreground="{StaticResource Muted}" FontSize="10" LineHeight="13" HorizontalAlignment="Left"/>
+                            <TextBlock Text="THROTTLE:&#x0a;SHIFT/CTRL" Foreground="{StaticResource Muted}" FontSize="10" LineHeight="13" HorizontalAlignment="Right" TextAlignment="Right"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- 우측: 2축 짐벌 [I/J/K/L] -->
+                <Border Grid.Column="2" Background="{StaticResource SurfaceAlt}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="10">
+                    <StackPanel>
+                        <TextBlock Text="2-AXIS GIMBAL [I/J/K/L]" Foreground="{StaticResource Muted}" FontSize="11" FontWeight="Bold" Margin="0,0,0,6"/>
+
+                        <!-- 짐벌 키패드 -->
+                        <Grid Width="134" Height="96" HorizontalAlignment="Center">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="30"/>
+                                <RowDefinition Height="30"/>
+                                <RowDefinition Height="30"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="40"/>
+                                <ColumnDefinition Width="54"/>
+                                <ColumnDefinition Width="40"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Button Grid.Row="0" Grid.Column="1" Content="↑" Margin="2"/>
+                            <Button Grid.Row="1" Grid.Column="0" Content="←" Margin="2"/>
+                            <Button Grid.Row="1" Grid.Column="1" Content="NADIR" Foreground="{StaticResource WarningBrush}" Background="{StaticResource Surface}" BorderBrush="{StaticResource BorderBrush}" FontSize="10" FontWeight="Bold" Margin="2"/>
+                            <Button Grid.Row="1" Grid.Column="2" Content="→" Margin="2"/>
+                            <Button Grid.Row="2" Grid.Column="1" Content="↓" Margin="2"/>
+                        </Grid>
+
+                        <Grid Margin="0,6,0,0">
+                            <TextBlock Text="{Binding GimbalPitchText, FallbackValue='P: -45.0°'}" Foreground="{StaticResource Foreground}" FontSize="11" HorizontalAlignment="Left"/>
+                            <TextBlock Text="{Binding GimbalYawText, FallbackValue='Y: 0.0°'}" Foreground="{StaticResource Foreground}" FontSize="11" HorizontalAlignment="Right"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- 4) 하단 주요 액션 버튼 (CAPTURE / VIEW MODE) -->
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="8"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Button Grid.Column="0" Style="{StaticResource DangerButton}" Padding="0,9" Command="{Binding CaptureCommand}">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <TextBlock Text="📷" FontSize="13" Margin="0,0,6,0"/>
+                        <TextBlock Text="CAPTURE [C]" FontWeight="Bold" Foreground="White" FontSize="12"/>
+                    </StackPanel>
+                </Button>
+                <Button Grid.Column="2" Padding="0,9" BorderBrush="{StaticResource Accent}" BorderThickness="1" Command="{Binding ToggleViewModeCommand}">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <TextBlock Text="⟲" Foreground="{StaticResource AccentHover}" FontSize="13" Margin="0,0,6,0"/>
+                        <TextBlock Text="VIEW MODE [V]" FontWeight="Bold" Foreground="{StaticResource AccentHover}" FontSize="12"/>
+                    </StackPanel>
+                </Button>
+            </Grid>
+        </StackPanel>
+    </Border>
+</UserControl>

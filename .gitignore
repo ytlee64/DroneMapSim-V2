@@ -97,9 +97,9 @@ venv/
 env/
 
 # --- AI / YOLO generated artifacts ---
-/apps/AI/Yolo/YoloDataset/
-/apps/AI/Yolo/runs/
-/apps/AI/Yolo/weights/
+/apps/AI/YoloDataset/
+/apps/AI/runs/
+/apps/AI/weights/
 *.pt
 *.pth
 *.onnx

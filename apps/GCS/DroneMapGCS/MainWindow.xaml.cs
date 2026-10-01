@@ -37,7 +37,7 @@ namespace DroneMapGCS
         {
             if (DataContext is MainWindowVM vm)
             {
-                vm.UpdateCanvasGeometry(e.NewSize.Width, e.NewSize.Height);
+                vm.Map.UpdateCanvasGeometry(e.NewSize.Width, e.NewSize.Height);
             }
         }
     }
