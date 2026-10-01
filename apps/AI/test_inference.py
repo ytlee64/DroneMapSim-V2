@@ -2,44 +2,60 @@
 # Smart Test Inference Script for Drone Dataset
 
 from ultralytics import YOLO
-import glob
 import os
 import sys
 
+
+def summarize_detection_stats(results):
+    total_images = len(results)
+    if total_images == 0:
+        print(">>> [Stats] No inference results were produced.")
+        return
+
+    detected_images = 0
+    no_detection_images = 0
+    boxes_per_detected = []
+
+    for result in results:
+        box_count = len(result.boxes) if result.boxes is not None else 0
+        if box_count > 0:
+            detected_images += 1
+            boxes_per_detected.append(box_count)
+        else:
+            no_detection_images += 1
+
+    detection_rate = (detected_images / total_images) * 100.0 if total_images else 0.0
+    avg_boxes = (sum(boxes_per_detected) / len(boxes_per_detected)) if boxes_per_detected else 0.0
+
+    print("\n==========================================================")
+    print(">>> [Detection Summary]")
+    print(f">>> Total images: {total_images}")
+    print(f">>> Detected images: {detected_images}")
+    print(f">>> No detection images: {no_detection_images}")
+    print(f">>> Detection rate: {detection_rate:.1f}%")
+    print(f">>> Average boxes per detected image: {avg_boxes:.2f}")
+    print("==========================================================")
+
 def get_best_weights_path():
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    project_root = os.path.abspath(os.path.join(script_dir, "..", ".."))
+    weights_dir = os.path.join(script_dir, "weights")
 
-    # 우선 1순위: 방금 생성된 -4 가중치 확인
-    specific_path = os.path.join(script_dir, "runs", "detect", "drone_vehicle_model-4", "weights", "best.pt")
-    if os.path.exists(specific_path):
-        return specific_path
+    candidate_paths = [
+        os.path.join(weights_dir, "best.onnx"),
+        os.path.join(weights_dir, "best.pt"),
+    ]
 
-    # 2순위: 기본 고정 경로 확인
-    default_path = os.path.join(script_dir, "runs", "detect", "drone_vehicle_model", "weights", "best.pt")
-    if os.path.exists(default_path):
-        return default_path
+    for candidate in candidate_paths:
+        if os.path.exists(candidate):
+            return candidate
 
-    # 3순위: runs/detect 안의 모든 best.pt 중 가장 최근 파일 자동 탐색
-    search_pattern = os.path.join(script_dir, "runs", "detect", "**", "best.pt")
-    all_weights = glob.glob(search_pattern, recursive=True)
-
-    if not all_weights:
-        # 프로젝트 루트까지 확장 검색
-        all_weights = glob.glob(os.path.join(project_root, "runs", "detect", "**", "best.pt"), recursive=True)
-
-    if not all_weights:
-        return None
-
-    # 가장 최근에 수정된 파일 선택
-    all_weights.sort(key=os.path.getmtime, reverse=True)
-    return all_weights[0]
+    return None
 
 def main():
     best_pt = get_best_weights_path()
 
     if not best_pt or not os.path.exists(best_pt):
-        print("[Error] Could not find any trained 'best.pt' weights!")
+        print("[Error] Could not find any trained model (best.onnx / best.pt) in the YOLO weights folder!")
         return
 
     print("==========================================================")
@@ -63,10 +79,14 @@ def main():
         exist_ok=True
     )
 
+    result_dir = os.path.join(output_dir, 'val_evaluation')
+
     print("\n==========================================================")
     print(">>> INFERENCE COMPLETE!")
-    print(f">>> Results saved in: {os.path.join(output_dir, 'val_evaluation')}")
+    print(f">>> Results saved in: {result_dir}")
     print("==========================================================")
+
+    summarize_detection_stats(results)
 
 if __name__ == "__main__":
     main()

@@ -15,6 +15,12 @@ namespace DroneMapGCS
         // (.uproject 파일이 있는 폴더 = 언리얼 프로젝트 루트, 그 하위의 Saved\DroneCaptures)
         private const string CaptureSubFolder = "DroneCaptures";
         private static readonly string DefaultCapturePath = ResolveCapturePath(CaptureSubFolder);
+
+        // YOLOv8 학습 결과(ultralytics best.pt -> best.onnx 로 변환) 경로
+        // apps\AI\Yolo\train_yolo.py 로 학습되어 apps\AI\Yolo\runs\detect\drone_vehicle_model\weights 에 저장됨
+        private const string YoloModelRelativePath = @"apps\AI\Yolo\runs\detect\drone_vehicle_model\weights\best.onnx";
+        private static readonly string YoloModelPath = ResolveRepoRootPath(YoloModelRelativePath);
+
         private readonly ImageWatcherService _watcherService;
         private readonly CommTelemetryService _telemetryService;
         private readonly CommCmdService _commandService;
@@ -32,9 +38,11 @@ namespace DroneMapGCS
         // 마지막으로 전송한 조종 명령 알림
         [ObservableProperty] private string _lastActionNotice = "조종 대기 (화면 클릭 후 키보드 조작 가능)";
 
+        private int AutoNavEnable=0;
+
         public MainWindowVM()
         {
-            _watcherService = new ImageWatcherService(DefaultCapturePath);
+            _watcherService = new ImageWatcherService(DefaultCapturePath, YoloModelPath);
             _watcherService.ImageCaptured += OnImageCaptured;
 
             _telemetryService = new CommTelemetryService();
@@ -69,6 +77,28 @@ namespace DroneMapGCS
 
             // .uproject를 못 찾으면 기존 방식(실행 파일 기준 상대 경로)의 저장소 레이아웃으로 대체
             return Path.GetFullPath(Path.Combine("..", "..", "..", "..", "..", "engine", "Saved", subFolder), AppContext.BaseDirectory);
+        }
+
+        /// <summary>
+        /// 실행 파일 위치에서 상위로 올라가며 저장소 루트(.git 폴더가 있는 곳)를 찾아
+        /// 그 기준으로 relativePath(예: apps\AI\Yolo\...)를 절대 경로로 변환합니다.
+        /// </summary>
+        private static string ResolveRepoRootPath(string relativePath)
+        {
+            DirectoryInfo? dir = new DirectoryInfo(AppContext.BaseDirectory);
+
+            while (dir != null)
+            {
+                if (Directory.Exists(Path.Combine(dir.FullName, ".git")))
+                {
+                    return Path.GetFullPath(Path.Combine(dir.FullName, relativePath));
+                }
+
+                dir = dir.Parent;
+            }
+
+            // 저장소 루트를 못 찾으면 실행 파일 기준 상대 경로(apps\GCS\DroneMapGCS\bin\...)의 레이아웃으로 대체
+            return Path.GetFullPath(Path.Combine("..", "..", "..", "..", "..", relativePath), AppContext.BaseDirectory);
         }
 
         /// <summary>
@@ -174,7 +204,8 @@ namespace DroneMapGCS
                     break;
 
                 case Key.D1:
-                    _commandService.SendJsonCommand(new AutoNavCommand());
+                    AutoNavEnable = (AutoNavEnable + 1) % 2;
+                    _commandService.SendJsonCommand(new AutoNavCommand { Enable = AutoNavEnable });
                     desc = "자동 조정[1]";
                     break;
 

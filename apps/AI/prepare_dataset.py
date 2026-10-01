@@ -19,7 +19,7 @@ def prepare_yolo_dataset(
     random.seed(seed)
 
     if source_dir is None:
-        source_dir = os.path.join(PROJECT_ROOT, "Saved", "DroneCaptures")
+        source_dir = os.path.join(PROJECT_ROOT,"engine" ,"Saved", "DroneCaptures")
     if output_dir is None:
         output_dir = os.path.join(SCRIPT_DIR, "YoloDataset")
 

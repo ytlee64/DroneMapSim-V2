@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Threading.Tasks;
@@ -11,10 +12,13 @@ namespace DroneMapGCS
     public class ImageWatcherService : IDisposable
     {
         private readonly FileSystemWatcher _watcher;
+        private readonly YoloDetectorService _detector;
         public event Action<BitmapImage, string, long>? ImageCaptured;
 
-        public ImageWatcherService(string watchPath)
+        public ImageWatcherService(string watchPath, string yoloModelPath)
         {
+            _detector = new YoloDetectorService(yoloModelPath);
+
             watchPath = watchPath.Trim();
             if (!Directory.Exists(watchPath))
             {
@@ -39,7 +43,7 @@ namespace DroneMapGCS
             // 2. 내용 수정/덮어쓰기 감지
             _watcher.Changed += (s, e) => OnFileDetected(e.FullPath);
 
-            // 3. ⭐ 언리얼 엔진 전용: 임시 파일(.tmp)에서 .png로 이름 바뀔 때 감지!
+            // 3. ? 언리얼 엔진 전용: 임시 파일(.tmp)에서 .png로 이름 바뀔 때 감지!
             _watcher.Renamed += (s, e) => OnFileDetected(e.FullPath);
 
             _watcher.Error += (s, e) =>
@@ -114,27 +118,35 @@ namespace DroneMapGCS
 
             if (bitmap != null)
             {
-                bitmap = DrawYoloBoundingBoxes(bitmap, filePath);
+                bitmap = DrawBoundingBoxes(bitmap, filePath);
                 ImageCaptured?.Invoke(bitmap, filePath, fileSizeBytes);
             }
         }
 
         /// <summary>
-        /// 이미지와 동일한 이름의 YOLO 라벨(.txt) 파일을 읽어
-        /// 정규화된 바운딩 박스를 초록색 사각형으로 그려 새 비트맵을 반환합니다.
-        /// (라벨 파일이 없으면 원본 비트맵을 그대로 반환)
+        /// 1) 이미지와 동일한 이름의 YOLO 정답(Ground-Truth) 라벨(.txt) 파일을 읽어
+        ///    정규화된 바운딩 박스를 녹색 사각형으로 그리고,
+        /// 2) YOLO 모델(best.onnx)로 실시간 추론한 탐지 결과를 빨간색 사각형으로 그려
+        /// 두 가지를 함께 표시한 새 비트맵을 반환합니다.
+        /// (둘 다 없으면 원본 비트맵을 그대로 반환)
         /// </summary>
-        private static BitmapImage DrawYoloBoundingBoxes(BitmapImage source, string imageFilePath)
+        private BitmapImage DrawBoundingBoxes(BitmapImage source, string imageFilePath)
         {
-            string labelFilePath = Path.ChangeExtension(imageFilePath, ".txt");
-            if (!File.Exists(labelFilePath))
+            int pixelWidth = source.PixelWidth;
+            int pixelHeight = source.PixelHeight;
+            if (pixelWidth <= 0 || pixelHeight <= 0)
             {
                 return source;
             }
 
-            int pixelWidth = source.PixelWidth;
-            int pixelHeight = source.PixelHeight;
-            if (pixelWidth <= 0 || pixelHeight <= 0)
+            string labelFilePath = Path.ChangeExtension(imageFilePath, ".txt");
+            bool hasGroundTruth = File.Exists(labelFilePath);
+
+            List<DetectionBox> detections = _detector.IsAvailable
+                ? _detector.Detect(source)
+                : new List<DetectionBox>();
+
+            if (!hasGroundTruth && detections.Count == 0)
             {
                 return source;
             }
@@ -144,31 +156,45 @@ namespace DroneMapGCS
             {
                 dc.DrawImage(source, new Rect(0, 0, pixelWidth, pixelHeight));
 
-                var pen = new Pen(Brushes.LimeGreen, 2.0);
-                pen.Freeze();
-
-                foreach (string line in File.ReadAllLines(labelFilePath))
+                if (hasGroundTruth)
                 {
-                    if (string.IsNullOrWhiteSpace(line)) continue;
+                    var groundTruthPen = new Pen(Brushes.LimeGreen, 2.0);
+                    groundTruthPen.Freeze();
 
-                    string[] parts = line.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                    // YOLO 포맷: class_id center_x center_y width height (모두 0~1 정규화 값)
-                    if (parts.Length < 5) continue;
-
-                    if (!double.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out double centerXNorm) ||
-                        !double.TryParse(parts[2], NumberStyles.Float, CultureInfo.InvariantCulture, out double centerYNorm) ||
-                        !double.TryParse(parts[3], NumberStyles.Float, CultureInfo.InvariantCulture, out double widthNorm) ||
-                        !double.TryParse(parts[4], NumberStyles.Float, CultureInfo.InvariantCulture, out double heightNorm))
+                    foreach (string line in File.ReadAllLines(labelFilePath))
                     {
-                        continue;
+                        if (string.IsNullOrWhiteSpace(line)) continue;
+
+                        string[] parts = line.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                        // YOLO 포맷: class_id center_x center_y width height (모두 0~1 정규화 값)
+                        if (parts.Length < 5) continue;
+
+                        if (!double.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out double centerXNorm) ||
+                            !double.TryParse(parts[2], NumberStyles.Float, CultureInfo.InvariantCulture, out double centerYNorm) ||
+                            !double.TryParse(parts[3], NumberStyles.Float, CultureInfo.InvariantCulture, out double widthNorm) ||
+                            !double.TryParse(parts[4], NumberStyles.Float, CultureInfo.InvariantCulture, out double heightNorm))
+                        {
+                            continue;
+                        }
+
+                        double boxWidth = widthNorm * pixelWidth;
+                        double boxHeight = heightNorm * pixelHeight;
+                        double boxLeft = (centerXNorm * pixelWidth) - (boxWidth * 0.5);
+                        double boxTop = (centerYNorm * pixelHeight) - (boxHeight * 0.5);
+
+                        dc.DrawRectangle(null, groundTruthPen, new Rect(boxLeft, boxTop, boxWidth, boxHeight));
                     }
+                }
 
-                    double boxWidth = widthNorm * pixelWidth;
-                    double boxHeight = heightNorm * pixelHeight;
-                    double boxLeft = (centerXNorm * pixelWidth) - (boxWidth * 0.5);
-                    double boxTop = (centerYNorm * pixelHeight) - (boxHeight * 0.5);
+                if (detections.Count > 0)
+                {
+                    var detectionPen = new Pen(Brushes.Red, 2.0);
+                    detectionPen.Freeze();
 
-                    dc.DrawRectangle(null, pen, new Rect(boxLeft, boxTop, boxWidth, boxHeight));
+                    foreach (DetectionBox box in detections)
+                    {
+                        dc.DrawRectangle(null, detectionPen, box.Rect);
+                    }
                 }
             }
 
@@ -197,6 +223,7 @@ namespace DroneMapGCS
         public void Dispose()
         {
             _watcher?.Dispose();
+            _detector?.Dispose();
         }
     }
 }

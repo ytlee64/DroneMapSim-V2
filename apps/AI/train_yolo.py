@@ -1,8 +1,9 @@
 # Copyright Epic Games, Inc. All Rights Reserved.
-# YOLO Model Training Script on Drone Synthetic Dataset
+# YOLO Model Training & ONNX Export Script on Drone Synthetic Dataset
 
 from ultralytics import YOLO
 import os
+import shutil
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 RUNS_DETECT_DIR = os.path.join(SCRIPT_DIR, "runs", "detect")
@@ -31,13 +32,14 @@ def main():
     print("==========================================================")
 
     # 1. Load Pretrained Lightweight Model (yolov8n.pt or yolo11n.pt)
-    # Keep base weights under apps/AI/Yolo/weights to avoid root-level files.
     model = YOLO(resolve_base_weights_path())
 
+    # Clear previous training results if they exist
+    if os.path.exists(RUNS_DETECT_DIR):
+        print(f">>> Removing previous results from: {RUNS_DETECT_DIR}")
+        shutil.rmtree(RUNS_DETECT_DIR)
+
     # 2. Start Training
-    # imgsz=640: Standard high-speed input resolution (or 1280 for tiny vehicles)
-    # epochs=50: Sufficient for 1,000 synthetic drone dataset
-    # batch=16: Standard batch size (reduce to 8 if GPU VRAM is small)
     results = model.train(
         data=yaml_config,
         epochs=50,
@@ -45,6 +47,7 @@ def main():
         batch=16,
         project=RUNS_DETECT_DIR,
         name="drone_vehicle_model",
+        exist_ok=True,
         device=0,          # Set 0 for GPU, or 'cpu' if no dedicated GPU
         workers=4,
         patience=15,       # Early stopping if no improvement for 15 epochs
@@ -62,6 +65,38 @@ def main():
     metrics = model.val()
     print(f">>> Final Validation mAP50: {metrics.box.map50:.4f}")
     print(f">>> Final Validation mAP50-95: {metrics.box.map:.4f}")
+
+    # ==========================================================
+    # ⭐️ 4. Export Best Model to ONNX Format
+    # ==========================================================
+    print("\n==========================================================")
+    print(">>> EXPORTING BEST MODEL TO ONNX...")
+    print("==========================================================")
+    
+    if os.path.exists(best_weight_path):
+        # 최적의 가중치 모델 로드
+        best_model = YOLO(best_weight_path)
+        
+        # ONNX 변환 (opset=12는 OpenCV, TensorRT, C++ NNE와 가장 호환성이 뛰어남)
+        exported_onnx_path = best_model.export(
+            format="onnx",
+            imgsz=640,
+            opset=12,          # 표준 ONNX 연산자 세트
+            dynamic=False,      # 고정 해상도 (C++ 추론 시 속도 최적화)
+            simplify=True       # 불필요한 노드 제거 및 최적화
+        )
+        
+        # 관리하기 편하게 weights 폴더로 복사본 저장
+        final_deploy_onnx = os.path.join(WEIGHTS_DIR, "best.onnx")
+        shutil.copy2(exported_onnx_path, final_deploy_onnx)
+
+        print("==========================================================")
+        print(f">>> ONNX EXPORT SUCCESSFUL!")
+        print(f">>> 1. Run Artifact : {exported_onnx_path}")
+        print(f">>> 2. Deploy Copy  : {final_deploy_onnx}")
+        print("==========================================================")
+    else:
+        print(f"[Error] Best weight file not found at: {best_weight_path}")
 
 if __name__ == "__main__":
     main()

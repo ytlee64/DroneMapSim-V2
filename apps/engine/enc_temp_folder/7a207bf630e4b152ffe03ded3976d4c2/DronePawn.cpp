@@ -69,43 +69,36 @@ void ADronePawn::BeginPlay()
         SetActorLocation(SpawnLoc, false, nullptr, ETeleportType::TeleportPhysics);
     }
 
+    // 2. 드론 카메라에서 본체 가리기
     if (DroneCameraComponent)
     {
-        // 2. 드론 카메라에서 본체 가리기
         DroneCameraComponent->HiddenActors.Add(this);
-
-        // 3. 월드 내 모든 스캔 사영 카메라 뷰에서 숨김
-        TArray<AActor*> FoundProjection;
-        UGameplayStatics::GetAllActorsOfClass(GetWorld(), AScanProjection::StaticClass(), FoundProjection);
-        for (AActor* ProjectionActor : FoundProjection)
-        {
-            DroneCameraComponent->HiddenActors.AddUnique(ProjectionActor);
-        }
-
-        // ⭐️ [핵심 1] 최종 색상(LDR)으로 설정하여 톤매핑 활성화
-        DroneCameraComponent->CaptureSource = ESceneCaptureSource::SCS_FinalColorLDR;
-
-        // ⭐️ [핵심 2] 쇼플래그(ShowFlags)를 켜주어야 아래 PostProcessSettings가 실제로 적용됩니다!
-        DroneCameraComponent->ShowFlags.SetPostProcessing(true);
-        DroneCameraComponent->ShowFlags.SetToneCurve(true);               // 톤매핑 강제 켜기
-        DroneCameraComponent->ShowFlags.SetEyeAdaptation(true);           // 눈 적응(자동 노출) 강제 켜기
-        DroneCameraComponent->ShowFlags.SetSkyLighting(true);             // 하늘빛(간접광) 켜서 그림자 밝히기
-        DroneCameraComponent->ShowFlags.SetAtmosphere(true);              // 대기광 반영
-        DroneCameraComponent->ShowFlags.SetLumenGlobalIllumination(true); // 루멘 반사광 켜기
-        DroneCameraComponent->bAlwaysPersistRenderingState = true;        // 노출 상태 매 프레임 유지
-
-        // ⭐️ [핵심 3] 자동 노출 및 밝기 보정 (+2.5 ~ 3.5로 충분히 환하게 올림)
-        DroneCameraComponent->PostProcessSettings.bOverride_AutoExposureMethod = true;
-        DroneCameraComponent->PostProcessSettings.AutoExposureMethod = EAutoExposureMethod::AEM_Histogram;
-
-        DroneCameraComponent->PostProcessSettings.bOverride_AutoExposureBias = true;
-        DroneCameraComponent->PostProcessSettings.AutoExposureBias = 2.5f; // 기본 1.5 -> 2.5로 상향
-
-        DroneCameraComponent->PostProcessSettings.bOverride_AutoExposureMinBrightness = true;
-        DroneCameraComponent->PostProcessSettings.bOverride_AutoExposureMaxBrightness = true;
-        DroneCameraComponent->PostProcessSettings.AutoExposureMinBrightness = 0.5f;
-        DroneCameraComponent->PostProcessSettings.AutoExposureMaxBrightness = 4.0f;
     }
+
+    // 3. 월드 내 모든 스캔 사영 카메라 뷰에서 숨김
+    TArray<AActor*> FoundProjection;
+    UGameplayStatics::GetAllActorsOfClass(GetWorld(), AScanProjection::StaticClass(), FoundProjection);
+    for (AActor* ProjectionActor : FoundProjection)
+    {
+        DroneCameraComponent->HiddenActors.AddUnique(ProjectionActor);
+    }
+
+    // 1. [핵심] 톤매핑과 포스트 프로세스가 모두 적용된 최종 색상(LDR)으로 캡처
+    DroneCameraComponent->CaptureSource = ESceneCaptureSource::SCS_FinalColorLDR;
+
+    // 2. [핵심] 자동 노출(Eye Adaptation) 활성화
+    DroneCameraComponent->PostProcessSettings.bOverride_AutoExposureMethod = true;
+    DroneCameraComponent->PostProcessSettings.AutoExposureMethod = EAutoExposureMethod::AEM_Histogram;
+
+    // 3. 노출 보정 (밝기 강제 증가: 1.0 ~ 2.5 사이로 원하는 만큼 조절)
+    DroneCameraComponent->PostProcessSettings.bOverride_AutoExposureBias = true;
+    DroneCameraComponent->PostProcessSettings.AutoExposureBias = 1.5f; // 숫자가 클수록 화면이 밝아짐
+
+    // 4. 최소/최대 밝기 폭을 넓혀서 그림자 속도 밝게 보이도록 설정
+    DroneCameraComponent->PostProcessSettings.bOverride_AutoExposureMinBrightness = true;
+    DroneCameraComponent->PostProcessSettings.bOverride_AutoExposureMaxBrightness = true;
+    DroneCameraComponent->PostProcessSettings.AutoExposureMinBrightness = 0.5f;
+    DroneCameraComponent->PostProcessSettings.AutoExposureMaxBrightness = 3.0f;
 }
 
 void ADronePawn::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -142,6 +135,7 @@ void ADronePawn::ApplyManualControl(float Throttle, float Roll, float Pitch, flo
         NavEngine->SetManualInput(Throttle, Roll, Pitch, Yaw);
     }
 }
+ 
 
 void ADronePawn::ToggleGimbalMode()
 {
@@ -185,39 +179,23 @@ void ADronePawn::ExecuteCapture()
     FString LabelFileName = DirectorySavePath / (ImageBaseName + TEXT(".txt"));
     FString MetadataCSVFileName = DirectorySavePath / TEXT("Dataset_Log.csv");
 
-    // 1. 카메라 씬 캡처 갱신
+    // 1. 카메라 렌더타깃 이미지 PNG 저장
     DroneCameraComponent->CaptureScene();
 
-    int32 RenderWidth = DroneRenderTargetAsset->SizeX > 0 ? DroneRenderTargetAsset->SizeX : 1920;
-    int32 RenderHeight = DroneRenderTargetAsset->SizeY > 0 ? DroneRenderTargetAsset->SizeY : 1080;
-
-    // ⭐️ [핵심 4] 감마 2.2(LinearToGamma)를 적용하여 밝고 선명한 PNG로 직접 저장!
-    // (기존 ExportRenderTarget2DAsPNG는 감마 보정을 안 해서 새까맣게 저장되는 버그가 있음)
-    FRenderTarget* RenderTargetResource = DroneRenderTargetAsset->GameThread_GetRenderTargetResource();
-    if (RenderTargetResource)
+    TUniquePtr<FArchive> FileWriter(IFileManager::Get().CreateFileWriter(*FullImageFilePath));
+    if (FileWriter.IsValid())
     {
-        TArray<FColor> OutPixels;
-        FReadSurfaceDataFlags ReadFlags(RCM_UNorm);
-        ReadFlags.SetLinearToGamma(true); // ⭐️ 감마 2.2 보정 활성화로 암흑 제거!
-
-        if (RenderTargetResource->ReadPixels(OutPixels, ReadFlags))
-        {
-            // 투명도(알파)를 255(완전 불투명)로 확실히 채움
-            for (FColor& Pixel : OutPixels)
-            {
-                Pixel.A = 255;
-            }
-
-            TArray64<uint8> CompressedPNG;
-            FImageUtils::PNGCompressImageArray(RenderWidth, RenderHeight, OutPixels, CompressedPNG);
-            FFileHelper::SaveArrayToFile(CompressedPNG, *FullImageFilePath);
-        }
+        FImageUtils::ExportRenderTarget2DAsPNG(DroneRenderTargetAsset, *FileWriter);
+        FileWriter->Close();
     }
 
     // 2. YOLO Bounding Box 계산
     FVector CamLoc = DroneCameraComponent->GetComponentLocation();
     FRotator CamRot = DroneCameraComponent->GetComponentRotation();
     float CamFOV = DroneCameraComponent->FOVAngle;
+
+    int32 RenderWidth = DroneRenderTargetAsset->SizeX > 0 ? DroneRenderTargetAsset->SizeX : 1920;
+    int32 RenderHeight = DroneRenderTargetAsset->SizeY > 0 ? DroneRenderTargetAsset->SizeY : 1080;
 
     FString YoloLabelString = TEXT("");
     int32 VisibleTargetCount = 0;

@@ -1,4 +1,5 @@
 ﻿using System.Text.Json.Serialization;
+using System.Windows.Media.Media3D;
 
 namespace DroneMapGCS
 {
@@ -107,5 +108,14 @@ namespace DroneMapGCS
     public class AutoNavCommand : CmdPacket
     {
         public AutoNavCommand() : base("AUTONAV") { }
+
+        public AutoNavCommand(int enable) : base("AUTONAV")
+        {
+            Enable = enable;
+        }
+
+        //
+        [JsonPropertyName("enable")]
+        public int Enable { get; set; } = 0;
     }
 }

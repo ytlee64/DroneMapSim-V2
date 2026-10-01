@@ -78,7 +78,7 @@ public:
     TObjectPtr<UStaticMeshComponent> GimbalInnerAxisComp;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Drone|Components")
-    TObjectPtr<USceneCaptureComponent2D> DroneCameraComp;
+    TObjectPtr<USceneCaptureComponent2D> DroneCameraComponent;
 
     TObjectPtr<UCommLink> CommLink;
 
