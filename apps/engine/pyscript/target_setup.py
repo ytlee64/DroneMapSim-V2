@@ -301,12 +301,7 @@ def generate_targets(target_actor):
     log_step(5, "절차적 차량/표적 자동 생성 실행 중...")
     log_info("========================================================")
 
-    # C++ 함수 호출
-    if hasattr(target_actor, "generate_targets"):
-        target_actor.generate_targets()
-    elif hasattr(target_actor, "generate_environment"):
-        target_actor.generate_environment()
-
+    target_actor.generate_target()
     log_info("🎉 지형 위 차량/표적 배치가 성공적으로 완료되었습니다!")
 
 
@@ -323,18 +318,34 @@ def main():
 
     elements_array = build_target_elements(asset_reg, asset_lib)
 
-    # C++ 프로퍼티 매핑 (TargetElements 또는 EnvElements)
-    try:
-        target_actor.set_editor_property("TargetElements", elements_array)
-    except Exception:
-        target_actor.set_editor_property("EnvElements", elements_array)
+    # ⭐️ [핵심 1] 생성한 차량 메쉬 배열을 TargetGenActor의 TargetElements에 주입!
+    target_actor.set_editor_property("TargetElements", elements_array)
 
+    # 주입된 개수 확인 로그
+    injected_count = len(target_actor.get_editor_property("TargetElements"))
+    log_info(f"  + ✅ TargetElements 프로퍼티 주입 완료: {injected_count}개")
+
+    # 5단계: 차량/표적 생성 실행
     generate_targets(target_actor)
 
+    # 6단계: 바다 영역 차량 제거
     log_step(6, "바다(WaterBody) 영역 제외 후처리 실행 중...")
     removed = remove_spawned_instances_in_water(target_actor, all_actors)
     if removed > 0:
         log_info("✅ 바다 제외 후처리 적용 완료")
+
+    # ⭐️ [핵심 2] 최종 배치 상태와 Ground Truth 개수(Summary) 갱신 및 영구 박제
+    if hasattr(target_actor, "finalize_and_save_state"):
+        target_actor.finalize_and_save_state()
+
+    # ⭐️ [핵심 3] 레벨(.umap) 자동 저장 -> 다음번 언리얼 켤 때 재초기화 불필요!
+    unreal.EditorLoadingAndSavingUtils.save_dirty_packages(
+        save_map_packages=True,
+        save_content_packages=False
+    )
+    log_info("💾 레벨(.umap)에 비히클 메쉬, 배치 정보, Ground Truth가 영구 저장되었습니다!")
+
+
 
 
 if __name__ == "__main__":

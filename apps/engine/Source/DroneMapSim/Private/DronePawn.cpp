@@ -174,7 +174,20 @@ void ADronePawn::ExecuteCapture()
 {
     if (!DroneCameraComponent || !DroneRenderTargetAsset) return;
 
-    FString FileTimestamp = FDateTime::Now().ToString(TEXT("%Y%m%d_%H%M%S"));
+    const FDateTime Now = FDateTime::Now();
+
+    // ⭐️ 연월일_시분초_밀리초(3자리) 포맷 (예: 20261008_153744_085)
+    FString FileTimestamp = FString::Printf(
+        TEXT("%04d%02d%02d_%02d%02d%02d_%03d"),
+        Now.GetYear(),
+        Now.GetMonth(),
+        Now.GetDay(),
+        Now.GetHour(),
+        Now.GetMinute(),
+        Now.GetSecond(),
+        Now.GetMillisecond()
+    );
+
     FString DirectorySavePath = FPaths::ProjectSavedDir() / TEXT("DroneCaptures");
     IFileManager::Get().MakeDirectory(*DirectorySavePath, true);
 
@@ -306,4 +319,8 @@ void ADronePawn::ExecuteCapture()
         AbsGimbalRot.Pitch, AbsGimbalRot.Yaw, AbsGimbalRot.Roll);
 
     FFileHelper::SaveStringToFile(CompleteCSVRowString, *MetadataCSVFileName, FFileHelper::EEncodingOptions::ForceUTF8, &IFileManager::Get(), FILEWRITE_Append);
+
+
+    LastCapturedFile = ImageBaseName;
+
 }

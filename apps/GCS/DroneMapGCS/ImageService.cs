@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
@@ -9,127 +11,145 @@ using System.Windows.Media.Imaging;
 
 namespace DroneMapGCS
 {
-    public class ImageWatcherService : IDisposable
+    public class ImageService : IDisposable
     {
-        private readonly FileSystemWatcher _watcher;
+        private readonly string _captureDir;
         private readonly YoloDetectorService _detector;
+
+        private string _lastProcessedFileName = string.Empty;
+        private int _isProcessing = 0;
+
         public event Action<BitmapImage, string, long>? ImageCaptured;
 
-        public ImageWatcherService(string watchPath, string yoloModelPath)
+        public ImageService(string captureDir, string yoloModelPath)
         {
             _detector = new YoloDetectorService(yoloModelPath);
 
-            watchPath = watchPath.Trim();
-            if (!Directory.Exists(watchPath))
+            _captureDir = captureDir.Trim();
+            if (!Directory.Exists(_captureDir))
             {
-                Directory.CreateDirectory(watchPath);
-            }
-
-            _watcher = new FileSystemWatcher(watchPath)
-            {
-                Filter = "*.png", // png 파일 집중 감시
-                InternalBufferSize = 65536,
-                NotifyFilter = NotifyFilters.FileName
-                             | NotifyFilters.LastWrite
-                             | NotifyFilters.CreationTime
-                             | NotifyFilters.Size,
-                IncludeSubdirectories = false,
-                EnableRaisingEvents = true
-            };
-
-            // 1. 일반 생성 감지
-            _watcher.Created += (s, e) => OnFileDetected(e.FullPath);
-
-            // 2. 내용 수정/덮어쓰기 감지
-            _watcher.Changed += (s, e) => OnFileDetected(e.FullPath);
-
-            // 3. ? 언리얼 엔진 전용: 임시 파일(.tmp)에서 .png로 이름 바뀔 때 감지!
-            _watcher.Renamed += (s, e) => OnFileDetected(e.FullPath);
-
-            _watcher.Error += (s, e) =>
-            {
-                try
-                {
-                    _watcher.EnableRaisingEvents = false;
-                    _watcher.EnableRaisingEvents = true;
-                }
-                catch { }
-            };
-        }
-
-        private void OnFileDetected(string fullPath)
-        {
-            if (!fullPath.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
-                return;
-
-            // 백그라운드 태스크로 파일 로드 (언리얼 저장 완료 대기)
-            _ = Task.Run(async () => await LoadImageSafeAsync(fullPath));
-        }
-
-        private async Task LoadImageSafeAsync(string filePath)
-        {
-            BitmapImage? bitmap = null;
-            long fileSizeBytes = 0;
-
-            // 언리얼 엔진이 파일 핸들을 완전히 닫을(Flush/Close) 때까지 안전 재시도
-            for (int i = 0; i < 40; i++)
-            {
-                try
-                {
-                    if (File.Exists(filePath))
-                    {
-                        var fileInfo = new FileInfo(filePath);
-                        // 파일이 비어있지 않고 기록이 끝났는지 확인
-                        if (fileInfo.Length > 0)
-                        {
-                            // FileShare.ReadWrite로 열어서 언리얼의 쓰기 락과 충돌 회피
-                            using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-                            {
-                                using (var ms = new MemoryStream())
-                                {
-                                    await fs.CopyToAsync(ms);
-                                    ms.Position = 0;
-                                    fileSizeBytes = ms.Length;
-
-                                    var bmp = new BitmapImage();
-                                    bmp.BeginInit();
-                                    bmp.CacheOption = BitmapCacheOption.OnLoad;
-                                    bmp.StreamSource = ms;
-                                    bmp.EndInit();
-                                    bmp.Freeze(); // UI 스레드 전송용 Freeze
-
-                                    bitmap = bmp;
-                                }
-                            }
-                            break; // 읽기 성공 시 루프 탈출
-                        }
-                    }
-                }
-                catch (IOException)
-                {
-                    // 언리얼이 아직 파일을 닫지 않았으면 0.05초 대기
-                    await Task.Delay(50);
-                }
-                catch
-                {
-                    break;
-                }
-            }
-
-            if (bitmap != null)
-            {
-                bitmap = DrawBoundingBoxes(bitmap, filePath);
-                ImageCaptured?.Invoke(bitmap, filePath, fileSizeBytes);
+                Directory.CreateDirectory(_captureDir);
             }
         }
 
         /// <summary>
-        /// 1) 이미지와 동일한 이름의 YOLO 정답(Ground-Truth) 라벨(.txt) 파일을 읽어
-        ///    정규화된 바운딩 박스를 녹색 사각형으로 그리고,
-        /// 2) YOLO 모델(best.onnx)로 실시간 추론한 탐지 결과를 빨간색 사각형으로 그려
-        /// 두 가지를 함께 표시한 새 비트맵을 반환합니다.
-        /// (둘 다 없으면 원본 비트맵을 그대로 반환)
+        /// ⭐️ 오직 텔레메트리에서 전달된 캡처 파일명(packet.LastCapture)만을 기준으로 동작합니다.
+        /// (패킷에 .png가 없어도 자동으로 붙여서 처리하며, 이미 처리한 파일명이면 즉시 반환합니다.)
         /// </summary>
+        public void SyncCaptureFromTelemetry(string? telemetryCaptureFileName)
+        {
+            if (string.IsNullOrWhiteSpace(telemetryCaptureFileName))
+                return;
+
+            string fileName = telemetryCaptureFileName.Trim();
+            if (!fileName.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
+            {
+                fileName += ".png";
+            }
+
+            // 1. 이미 처리 완료한 캡처 파일이면 즉시 종료
+            if (string.Equals(fileName, _lastProcessedFileName, StringComparison.OrdinalIgnoreCase))
+                return;
+
+            // 2. 중복 진입 방지
+            if (Interlocked.CompareExchange(ref _isProcessing, 1, 0) != 0)
+                return;
+
+            string targetPngPath = Path.IsPathRooted(fileName)
+                ? fileName
+                : Path.Combine(_captureDir, fileName);
+
+            _ = Task.Run(async () =>
+            {
+                var sw = Stopwatch.StartNew();
+                Debug.WriteLine($"[ImageService] [{DateTime.Now:HH:mm:ss.fff}] 🔔 텔레메트리 신규 캡처 감지 -> '{fileName}' 로드 시작");
+
+                try
+                {
+                    for (int attempt = 1; attempt <= 10; attempt++)
+                    {
+                        if (TryLoadCompletedImage(targetPngPath, attempt, out BitmapImage? bitmap, out long fileSize) && bitmap != null)
+                        {
+                            sw.Stop();
+                            _lastProcessedFileName = fileName;
+
+                            Debug.WriteLine(
+                                $"[ImageService] [{DateTime.Now:HH:mm:ss.fff}] ✅ 로드 완료! " +
+                                $"(시도: {attempt}회차, 총 소요: {sw.ElapsedMilliseconds}ms, 크기: {fileSize:N0} bytes, 해상도: {bitmap.PixelWidth}x{bitmap.PixelHeight})");
+
+                            BitmapImage finalImage = DrawBoundingBoxes(bitmap, targetPngPath);
+                            ImageCaptured?.Invoke(finalImage, targetPngPath, fileSize);
+                            return;
+                        }
+
+                        await Task.Delay(50);
+                    }
+
+                    sw.Stop();
+                    Debug.WriteLine($"[ImageService] [{DateTime.Now:HH:mm:ss.fff}] ❌ 최종 로드 실패 (10회 시도 초과, {sw.ElapsedMilliseconds}ms 경과) | 경로: {targetPngPath}");
+                }
+                finally
+                {
+                    Interlocked.Exchange(ref _isProcessing, 0);
+                }
+            });
+        }
+
+        private static bool TryLoadCompletedImage(string filePath, int attempt, out BitmapImage? bitmap, out long fileSizeBytes)
+        {
+            bitmap = null;
+            fileSizeBytes = 0;
+            string shortName = Path.GetFileName(filePath);
+
+            try
+            {
+                var info = new FileInfo(filePath);
+                if (!info.Exists)
+                {
+                    Debug.WriteLine($"[ImageService] [{DateTime.Now:HH:mm:ss.fff}] ⏳ [{attempt}회차] 파일이 아직 디스크에 없음: {shortName}");
+                    return false;
+                }
+
+                if (info.Length <= 0)
+                {
+                    Debug.WriteLine($"[ImageService] [{DateTime.Now:HH:mm:ss.fff}] ⏳ [{attempt}회차] 파일 생성됨 (크기 0 byte - 언리얼 쓰기 시작 전): {shortName}");
+                    return false;
+                }
+
+                using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                if (fs.Length <= 0)
+                {
+                    Debug.WriteLine($"[ImageService] [{DateTime.Now:HH:mm:ss.fff}] ⏳ [{attempt}회차] 스트림 길이 0 byte: {shortName}");
+                    return false;
+                }
+
+                using var ms = new MemoryStream();
+                fs.CopyTo(ms);
+                ms.Position = 0;
+                fileSizeBytes = ms.Length;
+
+                var bmp = new BitmapImage();
+                bmp.BeginInit();
+                bmp.CacheOption = BitmapCacheOption.OnLoad;
+                bmp.StreamSource = ms;
+                bmp.EndInit();
+                bmp.Freeze();
+
+                bitmap = bmp;
+                return true;
+            }
+            catch (IOException ioEx)
+            {
+                Debug.WriteLine($"[ImageService] [{DateTime.Now:HH:mm:ss.fff}] 🔒 [{attempt}회차] 파일 쓰기 잠금(IOException) 대기 중: {shortName} ({ioEx.Message})");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[ImageService] [{DateTime.Now:HH:mm:ss.fff}] ⚠️ [{attempt}회차] PNG 디코딩 미완료({ex.GetType().Name}): {shortName} (언리얼이 아직 쓰는 중)");
+                return false;
+            }
+        }
+
         private BitmapImage DrawBoundingBoxes(BitmapImage source, string imageFilePath)
         {
             int pixelWidth = source.PixelWidth;
@@ -143,26 +163,32 @@ namespace DroneMapGCS
                 ? _detector.Detect(source)
                 : new List<DetectionBox>();
 
-            // 1. Ground Truth 파싱
             var groundTruths = new List<Rect>();
             if (hasGroundTruth)
             {
-                foreach (string line in File.ReadAllLines(labelFilePath))
+                try
                 {
-                    if (string.IsNullOrWhiteSpace(line)) continue;
-                    string[] parts = line.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                    if (parts.Length < 5) continue;
-
-                    if (double.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out double cx) &&
-                        double.TryParse(parts[2], NumberStyles.Float, CultureInfo.InvariantCulture, out double cy) &&
-                        double.TryParse(parts[3], NumberStyles.Float, CultureInfo.InvariantCulture, out double w) &&
-                        double.TryParse(parts[4], NumberStyles.Float, CultureInfo.InvariantCulture, out double h))
+                    using var fs = new FileStream(labelFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                    using var sr = new StreamReader(fs);
+                    string? line;
+                    while ((line = sr.ReadLine()) != null)
                     {
-                        double bw = w * pixelWidth;
-                        double bh = h * pixelHeight;
-                        groundTruths.Add(new Rect((cx * pixelWidth) - (bw * 0.5), (cy * pixelHeight) - (bh * 0.5), bw, bh));
+                        if (string.IsNullOrWhiteSpace(line)) continue;
+                        string[] parts = line.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                        if (parts.Length < 5) continue;
+
+                        if (double.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out double cx) &&
+                            double.TryParse(parts[2], NumberStyles.Float, CultureInfo.InvariantCulture, out double cy) &&
+                            double.TryParse(parts[3], NumberStyles.Float, CultureInfo.InvariantCulture, out double w) &&
+                            double.TryParse(parts[4], NumberStyles.Float, CultureInfo.InvariantCulture, out double h))
+                        {
+                            double bw = w * pixelWidth;
+                            double bh = h * pixelHeight;
+                            groundTruths.Add(new Rect((cx * pixelWidth) - (bw * 0.5), (cy * pixelHeight) - (bh * 0.5), bw, bh));
+                        }
                     }
                 }
+                catch { }
             }
 
             if (groundTruths.Count == 0 && detections.Count == 0) return source;
@@ -172,28 +198,24 @@ namespace DroneMapGCS
             {
                 dc.DrawImage(source, new Rect(0, 0, pixelWidth, pixelHeight));
 
-                // 펜 정의 (동결하여 성능 최적화)
-                var hitPen = new Pen(Brushes.Cyan, 2.5);          // ⭐️ 적중 (TP) - 선명한 청록색
+                var hitPen = new Pen(Brushes.Cyan, 2.5);
                 hitPen.Freeze();
 
-                var missedPen = new Pen(Brushes.Yellow, 2.0);      // ⭐️ 미탐 (FN) - 노란색 점선 (못 찾은 정답)
+                var missedPen = new Pen(Brushes.Yellow, 2.0);
                 missedPen.DashStyle = DashStyles.Dash;
                 missedPen.Freeze();
 
-                var falseAlarmPen = new Pen(Brushes.Red, 2.0);    // ⭐️ 오탐 (FP) - 빨간색 (잘못 찾음)
+                var falseAlarmPen = new Pen(Brushes.Red, 2.0);
                 falseAlarmPen.Freeze();
 
-                // IoU 매칭 추적용 배열
                 bool[] gtMatched = new bool[groundTruths.Count];
 
-                // 2. AI 추론값들을 정답과 비교
                 foreach (DetectionBox det in detections)
                 {
                     bool isHit = false;
                     for (int i = 0; i < groundTruths.Count; i++)
                     {
-                        // IoU(교집합/합집합) 계산
-                        if (CalculateIoU(det.Rect, groundTruths[i]) >= 0.4) // 40% 이상 일치 시 정답 인정
+                        if (CalculateIoU(det.Rect, groundTruths[i]) >= 0.4)
                         {
                             isHit = true;
                             gtMatched[i] = true;
@@ -201,11 +223,9 @@ namespace DroneMapGCS
                         }
                     }
 
-                    // 맞췄으면 청록색(Cyan), 헛다리면 빨간색(Red)
                     dc.DrawRectangle(null, isHit ? hitPen : falseAlarmPen, det.Rect);
                 }
 
-                // 3. AI가 끝내 찾지 못한 정답(미탐)은 노란색 점선으로 표시
                 for (int i = 0; i < groundTruths.Count; i++)
                 {
                     if (!gtMatched[i])
@@ -237,9 +257,6 @@ namespace DroneMapGCS
             return result;
         }
 
-        /// <summary>
-        /// 두 박스의 겹치는 비율 (Intersection over Union) 계산 헬퍼
-        /// </summary>
         private static double CalculateIoU(Rect r1, Rect r2)
         {
             Rect intersect = Rect.Intersect(r1, r2);
@@ -252,7 +269,6 @@ namespace DroneMapGCS
 
         public void Dispose()
         {
-            _watcher?.Dispose();
             _detector?.Dispose();
         }
     }

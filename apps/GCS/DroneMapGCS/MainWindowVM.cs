@@ -18,7 +18,7 @@ namespace DroneMapGCS
         private const string YoloModelRelativePath = @"apps\AI\weights\best.onnx";
         private static readonly string YoloModelPath = ResolveRepoRootPath(YoloModelRelativePath);
 
-        private readonly ImageWatcherService _watcherService;
+        private readonly ImageService _imageService;
         private readonly CommTelemetryService _telemetryService;
         private readonly CommCmdService _commandService;
 
@@ -49,8 +49,8 @@ namespace DroneMapGCS
 
         public MainWindowVM()
         {
-            _watcherService = new ImageWatcherService(DefaultCapturePath, YoloModelPath);
-            _watcherService.ImageCaptured += OnImageCaptured;
+            _imageService = new ImageService(DefaultCapturePath, YoloModelPath);
+            _imageService.ImageCaptured += OnImageCaptured;
 
             _telemetryService = new CommTelemetryService();
             _telemetryService.TelemetryReceived += OnTelemetryReceived;
@@ -87,45 +87,6 @@ namespace DroneMapGCS
         // 비행 제어 및 모드 전환 RelayCommands
         // =========================================================
         [RelayCommand]
-        private void SetManualMode()
-        {
-            AutoNavEnable = 0;
-            _commandService.SendJsonCommand(new AutoNavCommand { Enable = 0 });
-            FlightModeText = "MANUAL";
-            StatusText = $"[{DateTime.Now:HH:mm:ss}] 수동 비행 모드 [MANUAL] 전환 완료";
-        }
-
-        [RelayCommand]
-        private void SetAutoNav()
-        {
-            AutoNavEnable = 1;
-            _commandService.SendJsonCommand(new AutoNavCommand { Enable = 1 });
-            FlightModeText = "AUTO NAV";
-            StatusText = $"[{DateTime.Now:HH:mm:ss}] 자동 항법 모드 [AUTO NAV] 활성화 완료";
-        }
-
-        [RelayCommand]
-        private void SetLoiter()
-        {
-            FlightModeText = "LOITER 40M";
-            StatusText = $"[{DateTime.Now:HH:mm:ss}] 선회 정찰 모드 [LOITER 40M] 전환 완료";
-        }
-
-        [RelayCommand]
-        private void SetRTH()
-        {
-            FlightModeText = "RTH";
-            StatusText = $"[{DateTime.Now:HH:mm:ss}] 원점 복귀 [RTH] 명령 전송 완료";
-        }
-
-        [RelayCommand]
-        private void Capture()
-        {
-            _commandService.SendJsonCommand(new CaptureCommand());
-            StatusText = $"[{DateTime.Now:HH:mm:ss}] 📷 고해상도 캡처 [Space/C] 전송 완료";
-        }
-
-        [RelayCommand]
         private void ToggleViewMode()
         {
             _commandService.SendJsonCommand(new ObserverCommand());
@@ -156,12 +117,7 @@ namespace DroneMapGCS
                     _commandService.SendJsonCommand(new GimbalCommand { Up = -180, Right = 0 });
                     desc = "Drone Init[I]";
                     break;
-                case Key.Space:
-                case Key.C:
-                    Capture();
-                    return;
                 case Key.V:
-                case Key.O:
                     ToggleViewMode();
                     return;
                 case Key.Up:
@@ -194,8 +150,7 @@ namespace DroneMapGCS
                 case Key.D: SendFlightControl(0.0f, 1.0f, 0.0f, 0.0f); desc = "우선회 [D]"; break;
                 case Key.E: SendFlightControl(0.0f, 0.0f, 1.0f, 0.0f); desc = "상승 [E]"; break;
                 case Key.Q: SendFlightControl(0.0f, 0.0f, -1.0f, 0.0f); desc = "하강 [Q]"; break;
-                //case Key.Z: SendFlightControl(0.0f, 0.0f, 0.0f, -1.0f); desc = "좌러더 [Z]"; break;
-                //case Key.C: SendFlightControl(0.0f, 0.0f, 0.0f, 1.0f); desc = "우러더 [C]"; break;
+
                 case Key.D1:
                     AutoNavEnable = (AutoNavEnable + 1) % 2;
                     _commandService.SendJsonCommand(new AutoNavCommand { Enable = AutoNavEnable });
@@ -242,6 +197,7 @@ namespace DroneMapGCS
                 if (!string.IsNullOrEmpty(packet.Mode)) FlightModeText = packet.Mode;
 
                 // ⭐️ Map(TacticalMapVM)으로 텔레메트리 전달
+                _imageService.SyncCaptureFromTelemetry(packet.LastCapture);
                 Map.UpdateTelemetryMap((float)packet.LocX, (float)packet.LocY, (float)packet.LocZ, (float)packet.RotYaw);
             });
         }

@@ -429,6 +429,9 @@ void UCommLink::SendTelemetry()
 	Root->SetStringField(TEXT("mode"), 
 		CachedDronePawn->GetNavEngine()->IsAutoNav()? TEXT("AUTO"):TEXT("MANUAL"));
 
+	Root->SetStringField(TEXT("last_capture"),
+		CachedDronePawn->LastCapturedFile);
+
 	FString JsonOut;
 	TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&JsonOut);
 	FJsonSerializer::Serialize(Root.ToSharedRef(), Writer);

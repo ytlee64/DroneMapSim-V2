@@ -2,11 +2,29 @@
 using CommunityToolkit.Mvvm.Input;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Windows;
 using System.Windows.Media;
 
 namespace DroneMapGCS
 {
+    /// <summary>
+    /// GroundTruth_Targets.json 역직렬화용 DTO
+    /// </summary>
+    public class GroundTruthTargetDto
+    {
+        [JsonPropertyName("class_id")]
+        public int ClassId { get; set; }
+
+        [JsonPropertyName("class_name")]
+        public string ClassName { get; set; } = string.Empty;
+
+        [JsonPropertyName("location")]
+        public double[] Location { get; set; } = Array.Empty<double>();
+    }
+
     /// <summary>
     /// 2.3km 전술 맵 좌표 변환, 드론 마커, 기수선, 실시간 비행 궤적 렌더링 전담 ViewModel
     /// </summary>
@@ -35,10 +53,15 @@ namespace DroneMapGCS
         [ObservableProperty] private double _boundaryTop;
         [ObservableProperty] private double _boundarySize;
 
-        // 실시간 궤적선 (PathGeometry)
+        // 실시간 궤적선 (PathGeometry) - 기존 그대로 유지!
         [ObservableProperty] private PathGeometry _trajectoryGeometry = new PathGeometry();
         private PathFigure? _currentFigure = null;
         private bool _isFirstPoint = true;
+
+        // ⭐️ Ground Truth 표적 렌더링용 프로퍼티 추가
+        [ObservableProperty] private Geometry _groundTruthGeometry = Geometry.Empty;
+        [ObservableProperty] private int _groundTruthCount;
+        [ObservableProperty] private bool _showGroundTruth = true;
 
         // 사각형 웨이포인트 가이드라인 (Polygon)
         public PointCollection WaypointGuidePoints { get; } = new PointCollection();
@@ -50,8 +73,12 @@ namespace DroneMapGCS
         // 창 크기가 변경되어도 궤적이 깨지지 않도록 미터 원본 좌표 보관
         private readonly List<Point> _trajectoryWorldPoints = new List<Point>();
 
+        // ⭐️ Ground Truth 타겟들의 미터(m) 원본 좌표 보관
+        private readonly List<Point> _groundTruthWorldPoints = new List<Point>();
+
         public TacticalMapVM()
         {
+            LoadGroundTruthTargets();
             UpdateCanvasGeometry(800, 800);
         }
 
@@ -76,6 +103,7 @@ namespace DroneMapGCS
             BoundaryTop = _centerY - (BoundarySize * 0.5);
 
             RebuildTrajectoryGeometry();
+            RebuildGroundTruthGeometry(); // ⭐️ 캔버스 크기에 맞춰 GT 타겟 마커들도 재투영
         }
 
         private Point ToScreenPoint(Point worldPoint)
@@ -109,7 +137,97 @@ namespace DroneMapGCS
         }
 
         /// <summary>
-        /// 언리얼 엔진에서 텔레메트리가 올 때마다 마커와 궤적 갱신
+        /// ⭐️ GroundTruth_Targets.json 좌표들을 드론과 동일한 ToScreenPoint()로 변환해 마커 생성
+        /// </summary>
+        private void RebuildGroundTruthGeometry()
+        {
+            if (_centerX <= 0 || _centerY <= 0 || _groundTruthWorldPoints.Count == 0)
+            {
+                GroundTruthGeometry = Geometry.Empty;
+                return;
+            }
+
+            var group = new GeometryGroup();
+            foreach (Point worldPt in _groundTruthWorldPoints)
+            {
+                Point screenPt = ToScreenPoint(worldPt);
+                group.Children.Add(new EllipseGeometry(screenPt, 3.5, 3.5));
+            }
+            group.Freeze();
+            GroundTruthGeometry = group;
+        }
+
+        /// <summary>
+        /// ⭐️ Saved/Datasets/GroundTruth_Targets.json 파일을 찾아 미터(m) 단위로 로드
+        /// </summary>
+        public void LoadGroundTruthTargets(string? customJsonPath = null)
+        {
+            _groundTruthWorldPoints.Clear();
+
+            string? jsonPath = customJsonPath ?? FindGroundTruthJsonPath();
+            if (string.IsNullOrEmpty(jsonPath) || !File.Exists(jsonPath))
+            {
+                GroundTruthCount = 0;
+                GroundTruthGeometry = Geometry.Empty;
+                return;
+            }
+
+            try
+            {
+                string json = File.ReadAllText(jsonPath);
+                var targets = JsonSerializer.Deserialize<List<GroundTruthTargetDto>>(json);
+
+                if (targets != null)
+                {
+                    foreach (var t in targets)
+                    {
+                        if (t.Location != null && t.Location.Length >= 2)
+                        {
+                            // 언리얼 cm 단위를 미터(m) 단위로 변환 (100cm = 1m)
+                            double xMeters = t.Location[0] / 100.0;
+                            double yMeters = t.Location[1] / 100.0;
+                            _groundTruthWorldPoints.Add(new Point(xMeters, yMeters));
+                        }
+                    }
+                }
+
+                GroundTruthCount = _groundTruthWorldPoints.Count;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[TacticalMapVM] GroundTruth JSON 로드 오류: {ex.Message}");
+                GroundTruthCount = 0;
+            }
+        }
+
+        private static string? FindGroundTruthJsonPath()
+        {
+            string rel1 = Path.Combine("Saved", "Datasets", "GroundTruth_Targets.json");
+            string rel2 = Path.Combine("apps", "engine", "Saved", "Datasets", "GroundTruth_Targets.json");
+
+            DirectoryInfo? dir = new DirectoryInfo(AppDomain.CurrentDomain.BaseDirectory);
+            while (dir != null)
+            {
+                string c1 = Path.Combine(dir.FullName, rel1);
+                if (File.Exists(c1)) return c1;
+
+                string c2 = Path.Combine(dir.FullName, rel2);
+                if (File.Exists(c2)) return c2;
+
+                dir = dir.Parent;
+            }
+            return null;
+        }
+
+        [RelayCommand]
+        public void ReloadGroundTruth()
+        {
+            LoadGroundTruthTargets();
+            RebuildGroundTruthGeometry();
+        }
+
+        /// <summary>
+        /// 언리얼 엔진에서 텔레메트리가 올 때마다 마커와 궤적 갱신 (기존 코드 100% 동일)
         /// </summary>
         public void UpdateTelemetryMap(float locX_m, float locY_m, float locZ_m, float yaw_deg)
         {

@@ -70,5 +70,7 @@ namespace DroneMapGCS
         [JsonPropertyName("gimbal_mode")]
         public string GimbalMode { get; set; } = "";
 
+        [JsonPropertyName("last_capture")]
+        public string? LastCapture { get; set; }
     }
 }

@@ -8,31 +8,65 @@
 
             <!-- 실시간 항법 및 궤적 렌더링 캔버스 -->
             <Canvas x:Name="MapCanvas" SizeChanged="MapCanvas_SizeChanged">
-                <!-- 사각형 웨이포인트 경로선 -->
+                <!-- 1. 사각형 웨이포인트 경로선 -->
                 <Polygon Points="{Binding WaypointGuidePoints}" 
-                         Stroke="{StaticResource AccentHover}" StrokeThickness="1.5" StrokeDashArray="4 2"/>
+                         Stroke="{StaticResource AccentHover}" StrokeThickness="1.5" StrokeDashArray="4 2"
+                         Panel.ZIndex="1"/>
 
-                <!-- 실시간 비행 궤적선 -->
+                <!-- ⭐️ 2. GroundTruth_Targets.json 지상 타겟 마커들 (초록색 전술 마커) -->
+                <Path Data="{Binding GroundTruthGeometry}"
+                      Fill="#5510B981" Stroke="#10B981" StrokeThickness="1.5"
+                      Panel.ZIndex="3">
+                    <Path.Style>
+                        <Style TargetType="Path">
+                            <Setter Property="Visibility" Value="Visible"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ShowGroundTruth}" Value="False">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Path.Style>
+                </Path>
+
+                <!-- 3. 실시간 비행 궤적선 -->
                 <Path Data="{Binding TrajectoryGeometry}" 
                       Stroke="#00FFCC" StrokeThickness="2.5" 
                       StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                       Panel.ZIndex="5"/>
 
-                <!-- 드론 현재 위치 마커 -->
-                <Ellipse Canvas.Left="{Binding MarkerLeft}" Panel.ZIndex="6" Canvas.Top="{Binding MarkerTop}"
-                         Width="14" Height="14" Fill="{StaticResource DangerBrush}" Stroke="#FFFFFF" StrokeThickness="2"/>
+                <!-- 4. 드론 현재 위치 마커 -->
+                <Ellipse Canvas.Left="{Binding MarkerLeft}" Canvas.Top="{Binding MarkerTop}"
+                         Width="14" Height="14" Fill="{StaticResource DangerBrush}" Stroke="#FFFFFF" StrokeThickness="2"
+                         Panel.ZIndex="6"/>
 
-                <!-- 헤딩(기수) 방향 지시선 -->
+                <!-- 5. 헤딩(기수) 방향 지시선 -->
                 <Line X1="{Binding HeadingX1}" Y1="{Binding HeadingY1}"
                       X2="{Binding HeadingX2}" Y2="{Binding HeadingY2}"
                       Stroke="{StaticResource WarningBrush}" StrokeThickness="2.5"
                       Panel.ZIndex="6"/>
             </Canvas>
 
-            <!-- 궤적 초기화 버튼 -->
-            <Button Content="궤적 리셋" Command="{Binding ClearTrajectoryCommand}"
-                    HorizontalAlignment="Right" VerticalAlignment="Top" Margin="14"
-                    Padding="12,5" FontSize="12"/>
+            <!-- ⭐️ 상단 전술 지도 컨트롤 오버레이 바 (좌: GT 현황 / 우: 제어 버튼) -->
+            <DockPanel VerticalAlignment="Top" Margin="14" LastChildFill="False">
+                <!-- 좌측: Ground Truth 타겟 개수 및 표시 토글 -->
+                <Border DockPanel.Dock="Left" Background="#CC0B0F19" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="10,5">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Ellipse Width="8" Height="8" Fill="#10B981" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="지상 타겟(GT): " Foreground="{StaticResource Muted}" FontSize="12" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding GroundTruthCount, StringFormat='{}{0} 개'}" Foreground="#10B981" FontWeight="Bold" FontSize="12" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                        <CheckBox Content="표적 표시" IsChecked="{Binding ShowGroundTruth}" Foreground="{StaticResource Foreground}" FontSize="12" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- 우측: GT 새로고침 & 궤적 리셋 버튼 -->
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                    <Button Content="GT 새로고침" Command="{Binding ReloadGroundTruthCommand}"
+                            Padding="10,5" FontSize="12" Margin="0,0,6,0"/>
+                    <Button Content="궤적 리셋" Command="{Binding ClearTrajectoryCommand}"
+                            Padding="12,5" FontSize="12"/>
+                </StackPanel>
+            </DockPanel>
         </Grid>
     </GroupBox>
 </UserControl>

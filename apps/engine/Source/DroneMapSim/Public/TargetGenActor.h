@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+ï»¿// Copyright Epic Games, Inc. All Rights Reserved.
 
 #pragma once
 
@@ -10,36 +10,36 @@ class UStaticMesh;
 class UHierarchicalInstancedStaticMeshComponent;
 
 // =============================================================================
-// ÁöÇü »ı¼º ¿ä¼Ò ¼³Á¤ ±¸Á¶Ã¼
+// ì§€í˜• ìƒì„± ìš”ì†Œ ì„¤ì • êµ¬ì¡°ì²´
 // =============================================================================
 USTRUCT(BlueprintType)
 struct FTargetConfig
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Config")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dataset")
 	FString ElementName;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Config")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dataset")
 	TObjectPtr<UStaticMesh> ElementMesh;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Config", meta = (ClampMin = "0.0"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dataset", meta = (ClampMin = "0.0"))
 	float SpawnWeight;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Config", meta = (ClampMin = "0.0", ClampMax = "90.0"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dataset", meta = (ClampMin = "0.0", ClampMax = "90.0"))
 	float MaxSlopeAngle;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Config")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dataset")
 	FVector2D ScaleRange;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Environment", meta = (ToolTip = "°øÁß¿¡ ¶ß¸é À½¼ö(-), ¶¥¿¡ ÆÄ¹¯È÷¸é ¾ç¼ö(+)·Î ³ôÀÌ Á¶Àı"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dataset", meta = (ToolTip = "ê³µì¤‘ì— ëœ¨ë©´ ìŒìˆ˜(-), ë•…ì— íŒŒë¬»íˆë©´ ì–‘ìˆ˜(+)ë¡œ ë†’ì´ ì¡°ì ˆ"))
 	float ZOffset = -5.0f;
 
-	// AI ÇĞ½À¿ë Ç¥Àû(Â÷·®/¸ñÇ¥¹°) ¿©ºÎ
+	// AI í•™ìŠµìš© í‘œì (ì°¨ëŸ‰/ëª©í‘œë¬¼) ì—¬ë¶€
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dataset")
 	bool bIsTarget;
 
-	// ¶óº§ ID (¿¹: 0=½Â¿ëÂ÷, 1=Æ®·° µî)
+	// ë¼ë²¨ ID (ì˜ˆ: 0=ìŠ¹ìš©ì°¨, 1=íŠ¸ëŸ­ ë“±)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dataset")
 	int32 TargetClassId;
 
@@ -56,7 +56,7 @@ struct FTargetConfig
 };
 
 // =============================================================================
-// µ¥ÀÌÅÍ¼Â Á¤´ä(Ground Truth) ±â·Ï ±¸Á¶Ã¼
+// ë°ì´í„°ì…‹ ì •ë‹µ(Ground Truth) ê¸°ë¡ êµ¬ì¡°ì²´
 // =============================================================================
 USTRUCT(BlueprintType)
 struct FTargetRecord
@@ -89,7 +89,22 @@ struct FTargetRecord
 };
 
 // =============================================================================
-// Å¸°Ù °ü¸® ¹× »ı¼º±â ¾×ÅÍ (ATargetGenActor)
+// â­ï¸ ë¹„íˆí´ ì „ì²´ ë°°ì¹˜ ì •ë³´ ì˜êµ¬ ì €ì¥ìš© êµ¬ì¡°ì²´ (.umap ì§ë ¬í™” ë³´ì¥)
+// =============================================================================
+USTRUCT(BlueprintType)
+struct FSavedVehicleInstance
+{
+	GENERATED_BODY()
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Dataset")
+	int32 ElementIndex = 0;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Dataset")
+	FTransform WorldTransform;
+};
+
+// =============================================================================
+// íƒ€ê²Ÿ ê´€ë¦¬ ë° ìƒì„±ê¸° ì•¡í„° (ATargetGenActor)
 // =============================================================================
 UCLASS()
 class DRONEMAPSIM_API ATargetGenActor : public AActor
@@ -100,37 +115,45 @@ public:
 	ATargetGenActor();
 
 	// -------------------------------------------------------------------------
-	// 1. ¿ÜºÎ ¾×ÅÍ(µå·Ğ, °üÂûÀÚ µî)¸¦ À§ÇÑ ÁÂÇ¥/ÁöÇü ÀÎÅÍÆäÀÌ½º
+	// 1. ì™¸ë¶€ ì•¡í„°(ë“œë¡ , ê´€ì°°ì ë“±)ë¥¼ ìœ„í•œ ì¢Œí‘œ/ì§€í˜• ì¸í„°í˜ì´ìŠ¤
 	// -------------------------------------------------------------------------
-	UFUNCTION(BlueprintCallable, Category = "Environment")
+	UFUNCTION(BlueprintCallable, Category = "Dataset")
 	FVector GetMapCenter() const { return CachedMapCenter; }
 
-	UFUNCTION(BlueprintCallable, Category = "Environment")
+	UFUNCTION(BlueprintCallable, Category = "Dataset")
 	FVector GetMapExtent() const { return CachedMapExtent; }
 
-	UFUNCTION(BlueprintCallable, Category = "Environment")
+	UFUNCTION(BlueprintCallable, Category = "Dataset")
 	FVector GetMapCenterWithAltitude(float AltitudeCm) const
 	{
 		return FVector(CachedMapCenter.X, CachedMapCenter.Y, AltitudeCm);
 	}
 
-	UFUNCTION(BlueprintCallable, Category = "Environment")
+	UFUNCTION(BlueprintCallable, Category = "Dataset")
 	FVector GetTerrainSpawnLocation(float DesiredAlt = 3000.0f);
 
 	// -------------------------------------------------------------------------
-	// 2. Å¸°Ù »ı¼º ¹× °ü¸® ¿¡µğÅÍ ¹öÆ° (CallInEditor)
+	// 2. íƒ€ê²Ÿ ìƒì„± ë° ê´€ë¦¬ ì—ë””í„° ë²„íŠ¼ (CallInEditor)
 	// -------------------------------------------------------------------------
-	UFUNCTION(BlueprintCallable, CallInEditor, Category = "TargetGen")
+	UFUNCTION(BlueprintCallable, CallInEditor, Category = "Dataset")
 	void GenerateTarget();
 
-	UFUNCTION(BlueprintCallable, CallInEditor, Category = "TargetGen")
+	UFUNCTION(BlueprintCallable, CallInEditor, Category = "Dataset")
 	void ClearEnvironment();
 
-	UFUNCTION(BlueprintCallable, Category = "TargetGen")
+	UFUNCTION(BlueprintCallable, Category = "Dataset")
 	void SetupHISMComponents();
 
+	// â­ï¸ í˜„ì¬ HISM ë°°ì¹˜ ìƒíƒœ(ë°”ë‹¤ ì œê±° í›„)ë¥¼ ê¸°ë°˜ìœ¼ë¡œ SavedInstancesì™€ SpawnedTargetsë¥¼ ë™ê¸°í™” ë° ì˜êµ¬ ë°•ì œ
+	UFUNCTION(BlueprintCallable, CallInEditor, Category = "Dataset")
+	void FinalizeAndSaveState();
+
+	// â­ï¸ ì €ì¥ëœ TargetElements + SavedInstancesë¡œë¶€í„° í™”ë©´ì˜ HISM ë©”ì‰¬ì™€ Ground Truthë¥¼ ì¦‰ì‹œ ë³µì›
+	UFUNCTION(BlueprintCallable, CallInEditor, Category = "Dataset")
+	void RestoreFromSavedState();
+
 	// -------------------------------------------------------------------------
-	// 3. AI µ¥ÀÌÅÍ¼Â Ãâ·Â ÀÎÅÍÆäÀÌ½º
+	// 3. AI ë°ì´í„°ì…‹ ì¶œë ¥ ì¸í„°í˜ì´ìŠ¤
 	// -------------------------------------------------------------------------
 	UFUNCTION(BlueprintCallable, CallInEditor, Category = "Dataset")
 	bool ExportTargetsToJson(const FString& FileName);
@@ -139,43 +162,66 @@ public:
 	const TArray<FTargetRecord>& GetSpawnedTargets() const { return SpawnedTargets; }
 
 	// -------------------------------------------------------------------------
-	// 4. ¿¡µğÅÍ ¼³Á¤ ÇÁ·ÎÆÛÆ¼
+	// 4. ì—ë””í„° ì„¤ì • ë° ì˜êµ¬ ì €ì¥ í”„ë¡œí¼í‹°
 	// -------------------------------------------------------------------------
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TargetGen|Config")
-	TArray<FTargetConfig> EnvElements;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dataset")
+	TArray<FTargetConfig> TargetElements;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TargetGen|Config", meta = (ClampMin = "50.0"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dataset", meta = (ClampMin = "50.0"))
 	float GridSpacing;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TargetGen|Config")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dataset")
 	float PositionJitter;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TargetGen|Config", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dataset", meta = (ClampMin = "0.0", ClampMax = "1.0"))
 	float AlignToSurfaceNormal;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TargetGen|Config")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dataset")
 	FVector FallbackBoundsExtent;
 
-	// ·±Å¸ÀÓ ÀÎ½ºÅÏ½º ¹× ±â·Ï µ¥ÀÌÅÍ
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "TargetGen|Runtime")
+	// ëŸ°íƒ€ì„ HISM ì»´í¬ë„ŒíŠ¸
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Dataset`")
 	TArray<TObjectPtr<UHierarchicalInstancedStaticMeshComponent>> HISMComponents;
 
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Dataset|Runtime")
+	// â­ï¸ í™•ì •ëœ ëª¨ë“  ì°¨ëŸ‰ì˜ ë°°ì¹˜ ì¢Œí‘œ (.umapì— ì˜êµ¬ ì €ì¥ë¨)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Dataset")
+	TArray<FSavedVehicleInstance> SavedInstances;
+
+	// â­ï¸ AI ì¶”ë¡ ìš© Ground Truth ì •ë‹µ ë°°ì—´ (.umapì— ì˜êµ¬ ì €ì¥ë¨)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Dataset")
 	TArray<FTargetRecord> SpawnedTargets;
 
+	// -------------------------------------------------------------------------
+	// â­ï¸ 4-0. ì—ë””í„° ë””í…Œì¼ íŒ¨ë„ìš© ë°°ì¹˜ í˜„í™© ìš”ì•½ (ì½ê¸° ì „ìš©)
+	// -------------------------------------------------------------------------
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Dataset", meta = (DisplayName = "ì „ì²´ ë°°ì¹˜ ì°¨ëŸ‰ ìˆ˜ (Total Vehicles)"))
+	int32 TotalVehicleCount = 0;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Dataset", meta = (DisplayName = "AI íƒ€ê²Ÿ í‘œì  ìˆ˜ (Ground Truth Targets)"))
+	int32 TotalTargetCount = 0;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Dataset", meta = (DisplayName = "ì¼ë°˜ ë°°ê²½ ì°¨ëŸ‰ ìˆ˜ (Normal Vehicles)"))
+	int32 NormalVehicleCount = 0;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Dataset", meta = (DisplayName = "ì°¨ëŸ‰ ì¢…ë¥˜ë³„ ë°°ì¹˜ ìˆ˜ (Count By Element)"))
+	TMap<FString, int32> SpawnCountByElement;
+
+
 protected:
+	virtual void PostLoad() override;
+	virtual void OnConstruction(const FTransform& Transform) override;
 	virtual void BeginPlay() override;
 
 private:
-	// ÁöÇü ¹Ù¿îµå °è»ê ¹× Ä³½Ì
 	void CalculateLandscapeBounds();
-
-	// ¿ùµå ÀüÃ¼ Landscape/Proxy ÅëÇÕ ¹Ù¿îµù ¹Ú½º¸¦ °è»êÇÏ´Â °øÅë ÇïÆÛ
 	FBox GetTotalLandscapeBounds(TArray<AActor*>& OutLandscapeActors);
+	bool NeedsHISMRebuild() const;
 
-	UPROPERTY(VisibleAnywhere, Category = "Environment")
+	UPROPERTY(VisibleAnywhere, Category = "Dataset")
 	FVector CachedMapCenter = FVector::ZeroVector;
 
-	UPROPERTY(VisibleAnywhere, Category = "Environment")
+	UPROPERTY(VisibleAnywhere, Category = "Dataset")
 	FVector CachedMapExtent = FVector::ZeroVector;
+
+	void UpdateSummaryCounts(); // â­ï¸ ë””í…Œì¼ íŒ¨ë„ ì¹´ìš´íŠ¸ ê°±ì‹  í—¬í¼
 };
